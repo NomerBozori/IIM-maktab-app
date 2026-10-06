@@ -11,19 +11,66 @@ chat va sozlamalar — barchasi bir joyda.
 
 ## 🚀 Ishga tushirish
 
+### Mahalliy kompyuterda (development)
+
 ```bash
 # 1) API server (port 4000)
-cd server
-npm install
-node index.js
+cd server && npm install && node index.js
 
 # 2) Veb-ilova (port 5173) — yangi terminal oynasida
-cd client
-npm install
-npm run dev
+cd client && npm install && npm run dev
 ```
 
-Keyin brauzerda **http://localhost:5173** manzilini oching.
+Brauzerda **http://localhost:5173** ni oching.
+
+### Bitta serverda (production)
+
+Klient build qilingandan keyin Express server uni ham beradi — bitta URL yetarli:
+
+```bash
+npm install                 # barcha kutubxonalar
+npm run build               # client/dist yaratiladi
+npm start                   # http://localhost:4000
+```
+
+---
+
+## ☁️ Internetga joylash (deploy)
+
+Loyiha **bitta Node xizmati** sifatida ishlaydi (Express + build qilingan React).
+Har qanday Node hostingiga to'g'ridan-to'g'ri yuklanadi.
+
+| Xizmat | Sozlama |
+|---|---|
+| **Build command** | `npm run build` |
+| **Start command** | `npm start` |
+| **Health check** | `/api/health` |
+| **Node versiyasi** | 20 yoki yuqori |
+
+### Render.com (bepul) — tavsiya etiladi
+
+1. https://dashboard.render.com → **New +** → **Blueprint**
+2. Bu reponi tanlang (`NomerBozori/IIM-maktab-app`)
+3. `render.yaml` avtomatik o'qiladi — **Apply** bosing
+4. 2–3 daqiqadan keyin sayt tayyor 🎉
+
+### Railway / Fly.io / VPS
+
+```bash
+git clone https://github.com/NomerBozori/IIM-maktab-app.git
+cd IIM-maktab-app
+npm install && npm run build && npm start
+```
+
+> ⚠️ **Netlify/Vercel** faqat statik saytlarni beradi — bu loyihaning
+> Express serveri ishlamaydi. Ular uchun backend alohida kerak bo'ladi.
+
+### Muhim eslatma — ma'lumotlar
+
+Ma'lumotlar `server/data/*.json` fayllarida saqlanadi. Bepul hostinglarda
+disk vaqtinchalik bo'lgani uchun **har deploy'da ma'lumotlar qayta
+yaratiladi** (seed). Doimiy saqlash kerak bo'lsa, `server/index.js` dagi
+`readJson`/`writeJson` funksiyalarini ma'lumotlar bazasiga o'tkazing.
 
 ---
 

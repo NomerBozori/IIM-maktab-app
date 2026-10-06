@@ -1,0 +1,20 @@
+# ============================================================
+#  Render.com — bir buyruqda deploy (Blueprint)
+#  Render'da: New + → Blueprint → bu reponi tanlang.
+#  Qolganini Render o'zi bajaradi.
+# ============================================================
+services:
+  - type: web
+    name: iim-maktab-app
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Ma'lumotlar serverda JSON fayllarda saqlanadi.
+      # Free plan'da disk vaqtinchalik — har deploy'da seed qayta yaratiladi.

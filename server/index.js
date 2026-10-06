@@ -690,7 +690,24 @@ app.get('/api/student/dashboard', auth, (req, res) => {
   });
 });
 
+// ---------- frontend (production: client/dist) ----------
+// Vite build natijasi bir xil serverdan beriladi — shunda bitta URL,
+// bitta xizmat yetarli (Render / Railway / Fly.io / VPS).
+const DIST_DIR = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(DIST_DIR)) {
+  app.use(express.static(DIST_DIR));
+  // SPA marshrutlari (/rankings, /chat ...) uchun index.html ga qaytarish
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(DIST_DIR, 'index.html'));
+  });
+  console.log('Frontend berilmoqda: ' + DIST_DIR);
+} else {
+  console.log('DIQQAT: client/dist topilmadi — faqat API ishlayapti.');
+  console.log('       Frontend uchun: cd client && npm install && npm run build');
+}
+
 // 404
 app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint topilmadi' }));
 
-app.listen(PORT, () => console.log('Intellekt Innovatsion Maktabi API ishlamoqda: http://localhost:' + PORT));
+app.listen(PORT, () => console.log('Intellekt Innovatsion Maktabi ishlamoqda: http://localhost:' + PORT));

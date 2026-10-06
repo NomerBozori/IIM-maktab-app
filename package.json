@@ -1,0 +1,18 @@
+{
+  "name": "intellekt-maktabi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Intellekt Innovatsion Maktabi — maktab boshqaruv tizimi (O'quvchi / Ustoz / Direktor)",
+  "author": "Intellekt Innovatsion Maktabi",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
+    "start": "node server/index.js",
+    "dev:server": "npm --prefix server start",
+    "dev:client": "npm --prefix client run dev",
+    "test": "node client/smoke.mjs"
+  }
+}
