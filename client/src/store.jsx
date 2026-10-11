@@ -54,6 +54,7 @@ const T = {
   'c.loginField': { uz: 'Login', ru: 'Логин', en: 'Login' },
   'c.password': { uz: 'Parol', ru: 'Пароль', en: 'Password' },
   'c.newPassword': { uz: 'Yangi parol', ru: 'Новый пароль', en: 'New password' },
+  'c.currentPassword': { uz: 'Joriy parol', ru: 'Текущий пароль', en: 'Current password' },
   'c.displayName': { uz: "Ko'rsatiladigan ism", ru: 'Отображаемое имя', en: 'Display name' },
   'c.description': { uz: 'Tavsif', ru: 'Описание', en: 'Description' },
   'c.title': { uz: 'Nomi', ru: 'Название', en: 'Title' },
@@ -75,6 +76,23 @@ const T = {
   'lg.noAcc': { uz: 'Akkauntingiz yo\'qmi?', ru: 'Нет аккаунта?', en: "Don't have an account?" },
   'lg.bad': { uz: 'Login yoki parol xato', ru: 'Неверный логин или пароль', en: 'Wrong login or password' },
   'lg.regOk': { uz: "Ro'yxatdan o'tdingiz", ru: 'Вы зарегистрированы', en: 'You are registered' },
+  'lg.invite': { uz: 'Taklif kodi (ustoz uchun)', ru: 'Код приглашения (для учителя)', en: 'Invite code (for teachers)' },
+  'lg.inviteHint': {
+    uz: "Ustoz hisobini faqat direktor bergan taklif kodi bilan ochish mumkin.",
+    ru: 'Учётную запись учителя можно создать только по коду приглашения от директора.',
+    en: "A teacher account can only be opened with an invite code from the director.",
+  },
+  'lg.directorClosed': {
+    uz: "Direktor hisobi ro'yxatdan o'tish orqali ochilmaydi.",
+    ru: 'Учётная запись директора не создаётся через регистрацию.',
+    en: 'A director account cannot be created through registration.',
+  },
+  'lg.pwMin': { uz: "Parol kamida {n} belgi", ru: 'Пароль — минимум {n} символов', en: 'Password: at least {n} characters' },
+  'lg.demoWarn': {
+    uz: "Namuna akkauntlar (demo) — ishlab chiqarishda o'chiriladi",
+    ru: 'Демо-аккаунты — удалите их в продакшене',
+    en: 'Demo accounts — remove them in production',
+  },
   'lg.pickSinf': { uz: 'Sinfingizni tanlang', ru: 'Выберите класс', en: 'Choose your class' },
   'lg.studentDesc': { uz: "Coinlar, baholar, reyting, chat", ru: 'Монеты, оценки, рейтинг, чат', en: 'Coins, grades, ranking, chat' },
   'lg.teacherDesc': { uz: 'Vazifa, davomat, dars jadvali, chat', ru: 'Задания, посещаемость, расписание, чат', en: 'Tasks, attendance, schedule, chat' },
@@ -183,6 +201,27 @@ const T = {
   'stt.changeName': { uz: 'Ismni o\'zgartirish', ru: 'Изменить имя', en: 'Change display name' },
   'stt.changePassword': { uz: 'Parolni o\'zgartirish', ru: 'Изменить пароль', en: 'Change password' },
   'stt.faq': { uz: 'Ko\'p beriladigan savollar', ru: 'Частые вопросы', en: 'Frequently asked questions' },
+  'stt.security': { uz: 'Xavfsizlik', ru: 'Безопасность', en: 'Security' },
+  'stt.demoWarn': {
+    uz: "Siz hali ham namuna (demo) parolidan foydalanmoqdasiz. Xavfsizlik uchun parolni almashtiring.",
+    ru: 'Вы всё ещё используете демо-пароль. В целях безопасности смените его.',
+    en: 'You are still using the demo password. For safety, change it.',
+  },
+  'stt.secNote1': {
+    uz: "Parollar bazada ochiq saqlanmaydi — scrypt hash. Sessiya 8 soatdan keyin tugaydi.",
+    ru: 'Пароли хранятся не в открытом виде, а как scrypt-хеш. Сессия истекает через 8 часов.',
+    en: 'Passwords are stored as scrypt hashes, never in plain text. Sessions expire after 8 hours.',
+  },
+  'stt.secNote2': {
+    uz: "Parolni almashtirsangiz, boshqa qurilmalardagi sessiyalar bekor qilinadi.",
+    ru: 'После смены пароля сессии на других устройствах отключаются.',
+    en: 'Changing your password signs you out on other devices.',
+  },
+  'stt.secNote3': {
+    uz: "Chat va baholar faqat o'zingizga tegishli xonalarda ko'rinadi — begona sinf ma'lumotlari yopiq.",
+    ru: 'Чат и оценки видны только в ваших комнатах — данные других классов закрыты.',
+    en: 'Chats and grades are limited to your own rooms — other classes stay closed.',
+  },
 
   // FAQ
   'fq.q1': { uz: 'Coinlarni qanday yig\'aman?', ru: 'Как заработать монеты?', en: 'How do I earn coins?' },
@@ -233,7 +272,11 @@ export async function api(path, opts = {}, token) {
   } catch (e) {
     data = {};
   }
-  if (!res.ok) throw new Error(data.error || 'Xato');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Xato');
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -268,7 +311,23 @@ export function AppProvider({ children }) {
     [lang]
   );
 
-  const request = useCallback((path, opts) => api(path, opts, token), [token]);
+  const request = useCallback(
+    async (path, opts) => {
+      try {
+        return await api(path, opts, token);
+      } catch (e) {
+        // Sessiya tugagan (401) — mahalliy ma'lumotlarni ham tozalaymiz
+        if (e && e.status === 401) {
+          localStorage.removeItem('im_token');
+          localStorage.removeItem('im_user');
+          setToken('');
+          setUser(null);
+        }
+        throw e;
+      }
+    },
+    [token]
+  );
 
   const login = useCallback(async (loginName, password) => {
     const data = await api('/login', { method: 'POST', body: { login: loginName, password } });
@@ -289,11 +348,13 @@ export function AppProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Serverdagi sessiyani ham bekor qilamiz — token nusxasi qolsa ishlamaydi
+    if (token) api('/logout', { method: 'POST' }, token).catch(() => {});
     localStorage.removeItem('im_token');
     localStorage.removeItem('im_user');
     setToken('');
     setUser(null);
-  }, []);
+  }, [token]);
 
   const updateUser = useCallback((patch) => {
     setUser((prev) => {

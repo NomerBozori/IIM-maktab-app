@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const { t, theme, setTheme, lang, setLang, request, user, updateUser } = useApp();
   const [name, setName] = useState(user.displayName);
   const [pw, setPw] = useState('');
+  const [pwCurrent, setPwCurrent] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,12 +37,16 @@ export default function SettingsPage() {
 
   const savePw = async (e) => {
     e.preventDefault();
-    if (!pw.trim()) return;
+    // Xavfsizlik: parolni almashtirish uchun joriy parol majburiy
+    if (!pwCurrent) return setErr(t('c.currentPassword'));
+    if (pw.length < 8) return setErr(t('lg.pwMin').replace('{n}', 8));
     setBusy(true);
     setErr('');
     try {
-      await request('/me', { method: 'PUT', body: { password: pw.trim() } });
+      const d = await request('/me', { method: 'PUT', body: { currentPassword: pwCurrent, password: pw } });
       setPw('');
+      setPwCurrent('');
+      if (d.user) updateUser(d.user);
       flash(t('c.saved') + ': ' + t('stt.changePassword'));
     } catch (ex) {
       setErr(ex.message);
@@ -63,6 +68,7 @@ export default function SettingsPage() {
 
       {msg && <div className="alert ok">{msg}</div>}
       {err && <div className="alert">{err}</div>}
+      {user.demo && <div className="alert">{t('stt.demoWarn')}</div>}
 
       <div className="settings-grid">
         <UI.Card title={t('stt.display')} icon={theme === 'light' ? <UI.Icon.Sun /> : <UI.Icon.Moon />} subtitle="Yorug' / qorong'i rejim">
@@ -109,13 +115,54 @@ export default function SettingsPage() {
 
         <UI.Card title={t('stt.changePassword')} icon={<UI.Icon.Key />}>
           <form className="form" onSubmit={savePw}>
-            <UI.Field label={t('c.newPassword')}>
-              <input className="input" type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="••••" />
+            <UI.Field label={t('c.currentPassword')}>
+              <input
+                className="input"
+                type="password"
+                value={pwCurrent}
+                onChange={(e) => setPwCurrent(e.target.value)}
+                placeholder="••••"
+                autoComplete="current-password"
+              />
+            </UI.Field>
+            <UI.Field label={t('c.newPassword')} hint={t('lg.pwMin').replace('{n}', 8)}>
+              <input
+                className="input"
+                type="password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                minLength={8}
+              />
             </UI.Field>
             <UI.Button type="submit" variant="subtle" icon={<UI.Icon.Lock />} loading={busy}>
               {t('c.save')}
             </UI.Button>
           </form>
+        </UI.Card>
+
+        <UI.Card title={t('stt.security')} icon={<UI.Icon.Shield />} subtitle="scrypt · sessiya 8 soat · ruxsatlar">
+          <ul className="hero-list">
+            <li>
+              <div>
+                <b>{t('stt.changePassword')}</b>
+                <div className="muted small">{t('stt.secNote2')}</div>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>{t('stt.security')}</b>
+                <div className="muted small">{t('stt.secNote1')}</div>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>{t('nav.chat')}</b>
+                <div className="muted small">{t('stt.secNote3')}</div>
+              </div>
+            </li>
+          </ul>
         </UI.Card>
 
         <UI.Card title={t('stt.faq')} icon={<UI.Icon.Help />} className="faq-card">

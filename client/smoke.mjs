@@ -17,9 +17,15 @@ const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></
   pretendToBeVisual: true,
 });
 
+// Node 21+ da ba'zi global'lar (navigator, localStorage) faqat o'qish uchun —
+// shuning uchun ularni defineProperty bilan almashtiramiz.
+function defineGlobal(name, value) {
+  Object.defineProperty(globalThis, name, { value, writable: true, configurable: true });
+}
+
 global.window = dom.window;
 global.document = dom.window.document;
-global.navigator = dom.window.navigator;
+defineGlobal('navigator', dom.window.navigator);
 global.HTMLElement = dom.window.HTMLElement;
 global.SVGElement = dom.window.SVGElement;
 global.Element = dom.window.Element;
@@ -40,8 +46,22 @@ if (!dom.window.Element.prototype.attachEvent) {
   dom.window.Element.prototype.detachEvent = function () {};
 }
 
+// --- Sana: test hafta kuniga bog'liq bo'lmasligi uchun qat'iy "dushanba"
+// (2026-10-12) qilib qo'yamiz. Server tomonda haqiqiy sana qoladi.
+const FIXED_NOW = new Date('2026-10-12T09:00:00');
+const RealDate = Date;
+function FakeDate(...args) {
+  if (args.length === 0) return new RealDate(FIXED_NOW);
+  return new RealDate(...args);
+}
+FakeDate.prototype = RealDate.prototype;
+FakeDate.now = () => FIXED_NOW.getTime();
+FakeDate.parse = RealDate.parse;
+FakeDate.UTC = RealDate.UTC;
+defineGlobal('Date', FakeDate);
+
 const __mem = new Map();
-global.localStorage = {
+const memoryStorage = {
   getItem: (k) => (__mem.has(k) ? __mem.get(k) : null),
   setItem: (k, v) => __mem.set(String(k), String(v)),
   removeItem: (k) => __mem.delete(k),
@@ -51,8 +71,9 @@ global.localStorage = {
     return __mem.size;
   },
 };
-global.sessionStorage = global.localStorage;
-Object.defineProperty(dom.window, 'localStorage', { value: global.localStorage, configurable: true });
+defineGlobal('localStorage', memoryStorage);
+defineGlobal('sessionStorage', memoryStorage);
+Object.defineProperty(dom.window, 'localStorage', { value: memoryStorage, configurable: true });
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
 const { install } = await import('./.smoke/fetchtest.mjs');
@@ -419,6 +440,10 @@ await step(
 );
 
 console.log('\n=== NATIJA ===');
+process.on('exit', (code) => {
+  // jsdom va sahifalardagi setInterval taymerlari jarayonni ushlab qolmasin
+  if (code === 0 && process.exitCode !== 1) console.log('smoke: tugadi');
+});
 if (errors.length) {
   console.log('React xatoliklar: ' + errors.length);
   errors.slice(0, 12).forEach((e, i) => console.log((i + 1) + '. ' + e.split('\n')[0]));
@@ -426,3 +451,8 @@ if (errors.length) {
 } else {
   console.log("React xatoliklar yo'q ✓");
 }
+
+// Chat sahifasi va boshqa sahifalardagi taymerlar to'xtatilsin —
+// aks holda Node jarayoni osilib qoladi.
+dom.window.close();
+setTimeout(() => process.exit(process.exitCode || 0), 50);

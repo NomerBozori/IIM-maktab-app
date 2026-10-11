@@ -13,6 +13,8 @@
     "start": "node server/index.js",
     "dev:server": "npm --prefix server start",
     "dev:client": "npm --prefix client run dev",
-    "test": "node client/smoke.mjs"
+    "test": "npm --prefix client test",
+    "test:security": "node server/security-test.mjs",
+    "test:all": "npm run test:security && npm test"
   }
 }

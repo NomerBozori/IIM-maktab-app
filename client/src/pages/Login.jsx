@@ -14,7 +14,7 @@ export default function LoginPage() {
   const { login, register, t } = useApp();
   const [role, setRole] = useState('student');
   const [mode, setMode] = useState('login'); // login | register
-  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '8-A', subject: '' });
+  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '8-A', subject: '', inviteCode: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -23,10 +23,28 @@ export default function LoginPage() {
   const submit = async (e) => {
     e.preventDefault();
     setErr('');
+    // Xavfsizlik: direktor hisobi ilova ichida ochilmaydi
+    if (mode === 'register' && role === 'director') {
+      setErr(t('lg.directorClosed'));
+      return;
+    }
+    if (mode === 'register' && form.password.length < 8) {
+      setErr(t('lg.pwMin').replace('{n}', 8));
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'login') await login(form.login, form.password);
-      else await register({ login: form.login, password: form.password, displayName: form.displayName, role, className: form.className, subject: form.subject });
+      else
+        await register({
+          login: form.login,
+          password: form.password,
+          displayName: form.displayName,
+          role,
+          className: form.className,
+          subject: form.subject,
+          inviteCode: form.inviteCode,
+        });
     } catch (ex) {
       setErr(ex.message);
     } finally {
@@ -132,19 +150,26 @@ export default function LoginPage() {
                   <input className="input" value={form.subject} onChange={set('subject')} placeholder="Matematika" />
                 </UI.Field>
               )}
+              {role === 'director' && <div className="alert">{t('lg.directorClosed')}</div>}
+              {role === 'teacher' && (
+                <UI.Field label={t('lg.invite')} hint={t('lg.inviteHint')}>
+                  <input className="input" value={form.inviteCode} onChange={set('inviteCode')} placeholder="••••" autoComplete="off" />
+                </UI.Field>
+              )}
             </>
           )}
           <UI.Field label={t('c.loginField')}>
             <input className="input" value={form.login} onChange={set('login')} placeholder="login" autoComplete="username" required />
           </UI.Field>
-          <UI.Field label={t('c.password')}>
+          <UI.Field label={t('c.password')} hint={mode === 'register' ? t('lg.pwMin').replace('{n}', 8) : undefined}>
             <input
               className="input"
               type="password"
               value={form.password}
               onChange={set('password')}
               placeholder="••••"
-              autoComplete="current-password"
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              minLength={mode === 'register' ? 8 : undefined}
               required
             />
           </UI.Field>
@@ -165,6 +190,7 @@ export default function LoginPage() {
 
         <div className="demo">
           <div className="muted tiny demo-title">{t('lg.demo')}</div>
+          <div className="muted tiny demo-warn">{t('lg.demoWarn')}</div>
           {DEMO.map((d) => (
             <button key={d.login} className="demo-row" onClick={() => quick(d)} disabled={busy}>
               <span className="role-dot" style={{ background: ROLE_TONE[d.role] }} />
