@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { useApp, LANGS } from './store.jsx';
+import { useApp, LANGS, api } from './store.jsx';
 import * as UI from './ui.jsx';
 import LoginPage from './pages/Login.jsx';
 import StudentHome from './pages/StudentHome.jsx';
@@ -37,16 +37,40 @@ const MENUS = {
 
 const ROLE_LABEL = { student: 'c.student', teacher: 'c.teacher', director: 'c.director' };
 
+// Mavzu: yorug' → qorong'i → avtomatik → yorug' ...
+const THEME_ORDER = ['light', 'dark', 'auto'];
+
 function Layout({ children }) {
-  const { user, logout, t, theme, setTheme, lang, setLang } = useApp();
+  const { user, logout, t, theme, setTheme, lang, setLang, token } = useApp();
   const nav = useNavigate();
   const loc = useLocation();
   const [drawer, setDrawer] = useState(false);
+  const [coins, setCoins] = useState(null);
 
   const menu = MENUS[user.role] || [];
   const current = menu.find((m) => m.to === loc.pathname) || menu[0];
 
-  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
+  const toggleTheme = () => setTheme(THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]);
+  const themeLabel = t(theme === 'dark' ? 'stt.dark' : theme === 'auto' ? 'stt.auto' : 'stt.light');
+
+  // O'quvchining coinlari — har sahifada ko'rinadigan ixcham chip
+  useEffect(() => {
+    if (user.role !== 'student') return undefined;
+    let alive = true;
+    const load = () => {
+      api('/student/dashboard', {}, token)
+        .then((d) => {
+          if (alive) setCoins(typeof d.coins === 'number' ? d.coins : 0);
+        })
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 15000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [user.role, token]);
 
   return (
     <div className={'app' + (drawer ? ' drawer-open' : '')}>
@@ -116,6 +140,12 @@ function Layout({ children }) {
           </span>
           <h2 className="page-title">{t(current.key)}</h2>
           <div className="spacer" />
+          {user.role === 'student' && coins !== null && (
+            <span className="topbar-coins" title={t('st.coinsTitle')}>
+              <UI.Icon.Coin width={16} height={16} />
+              <b>{coins}</b>
+            </span>
+          )}
           <div className="lang-wrap">
             <span className="only-desktop muted tiny">
               <UI.Icon.Globe width={14} height={14} />
@@ -133,8 +163,8 @@ function Layout({ children }) {
               ))}
             </select>
           </div>
-          <UI.IconButton title={t('stt.display')} onClick={toggleTheme}>
-            {theme === 'light' ? <UI.Icon.Moon /> : <UI.Icon.Sun />}
+          <UI.IconButton title={t('stt.display') + ': ' + themeLabel} onClick={toggleTheme}>
+            {theme === 'dark' ? <UI.Icon.Sun /> : theme === 'auto' ? <UI.Icon.Eye /> : <UI.Icon.Moon />}
           </UI.IconButton>
           <UI.Avatar name={user.displayName} color={user.role === 'director' ? '#6B4E9B' : user.role === 'teacher' ? '#1B3A5C' : '#C9A227'} size={34} />
         </header>

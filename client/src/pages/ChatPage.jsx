@@ -87,7 +87,11 @@ export default function ChatPage() {
                   <b>{c.title}</b>
                   <span className="muted tiny">{c.lastMessage ? UI.timeAgo(c.lastMessage.createdAt, t) : ''}</span>
                 </div>
-                <div className="muted tiny ci-sub">{c.subtitle || (c.type === 'class' || c.type === 'group' ? t('tc.classChat') : '')}</div>
+                <div className="muted tiny ci-sub">
+                  {c.type === 'staff'
+                    ? t('tc.staffSub')
+                    : c.subtitle || (c.type === 'class' || c.type === 'group' ? t('tc.classChat') : '')}
+                </div>
                 {c.lastMessage && (
                   <div className="muted small ci-last">
                     {c.lastMessage.senderId === user.id ? t('c.you') + ': ' : ''}
@@ -95,8 +99,8 @@ export default function ChatPage() {
                   </div>
                 )}
               </div>
-              {c.type === 'group' && (
-                <span className="ci-type">
+              {(c.type === 'group' || c.type === 'staff') && (
+                <span className={'ci-type' + (c.type === 'staff' ? ' staff' : '')}>
                   <UI.Icon.Users width={14} height={14} />
                 </span>
               )}
@@ -114,8 +118,10 @@ export default function ChatPage() {
               <div>
                 <b>{current.title}</b>
                 <div className="muted tiny">
-                  {current.subtitle || ''}
-                  {current.memberCount != null ? ' · ' + current.memberCount + ' ' + t('tc.students').toLowerCase() : ''}
+                  {current.type === 'staff' ? t('tc.staffSub') : current.subtitle || ''}
+                  {current.memberCount != null
+                    ? ' · ' + current.memberCount + ' ' + (current.type === 'staff' ? t('tc.staffMembers') : t('tc.students').toLowerCase())
+                    : ''}
                 </div>
               </div>
             </header>

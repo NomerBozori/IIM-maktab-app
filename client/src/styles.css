@@ -456,6 +456,12 @@ select.input,
   font-weight: 700;
 }
 
+/* Demo akkauntlar haqida ogohlantirish (ishlab chiqarishda o'chiriladi) */
+.demo-warn {
+  color: var(--warn, #b45309);
+  line-height: 1.35;
+}
+
 .demo-row {
   display: flex;
   align-items: center;
@@ -820,55 +826,6 @@ select.input,
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-
-.coin-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.coin-cell {
-  aspect-ratio: 1;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: var(--card-2);
-  border: 1px dashed var(--line);
-  color: var(--muted);
-  transition: all 0.2s ease;
-}
-
-.coin-cell.on {
-  background: linear-gradient(160deg, #F6EBB8, #E8C766);
-  border: 1px solid #C9A227;
-  color: #6B5310;
-  box-shadow: 0 6px 14px rgba(201, 162, 39, 0.28);
-}
-
-.coin-cell.center {
-  background: linear-gradient(160deg, #FBF6E7, #F3E6C0);
-  border: 1px solid #D9B84A;
-}
-
-:root[data-theme='dark'] .coin-cell.center {
-  background: linear-gradient(160deg, #16304A, #102438);
-  border-color: #C9A227;
-  color: #E8C766;
-}
-
-.coin-center-num {
-  font-size: 20px;
-  font-weight: 800;
-  color: #8A6A12;
-}
-
-:root[data-theme='dark'] .coin-center-num {
-  color: #E8C766;
-}
-
-.coins-next {
-  text-align: center;
 }
 
 /* Vazifalar */
@@ -2431,4 +2388,425 @@ select.input,
   .stat-row {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+
+/* ============================================================
+   IXCHAM COIN KO'RSATKICHLARI (o'quvchi)
+   ============================================================ */
+.coin-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7e2, #fdecc4);
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+:root[data-theme='dark'] .coin-chip {
+  background: linear-gradient(135deg, #2a2410, #3a2f12);
+}
+
+.coin-chip-ic {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #f3d98b, var(--gold));
+  color: #3b2f07;
+}
+
+.coin-chip-body {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.coin-chip-body b {
+  font-size: 20px;
+  color: var(--gold-deep);
+}
+
+:root[data-theme='dark'] .coin-chip-body b {
+  color: var(--gold-2);
+}
+
+.coin-chip-bar {
+  width: 74px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.22);
+  overflow: hidden;
+}
+
+.coin-chip-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-2));
+  transition: width 0.5s ease;
+}
+
+.coin-chip-hint {
+  white-space: nowrap;
+}
+
+.hello-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.coins-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coins-compact-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold-deep);
+}
+
+.coins-compact-top .coins-big {
+  font-size: 34px;
+  line-height: 1;
+}
+
+/* ============================================================
+   DAVOMAT: sabab tanlash
+   ============================================================ */
+.att-reason {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 0 0 8px 44px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+}
+
+.att-reason-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bad);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reason-btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--txt-soft);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reason-btn:hover {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.reason-btn.active {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+}
+
+.att-reason-note {
+  flex: 1 1 180px;
+  min-width: 160px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--txt);
+}
+
+.att-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--card-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.att-save-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  color: var(--txt-soft);
+  font-size: 13px;
+}
+
+.att-row.locked {
+  opacity: 0.68;
+}
+
+/* ============================================================
+   DIREKTOR: hammaga birdan coin belgilash
+   ============================================================ */
+.budget-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--card-2), var(--card));
+  margin-bottom: 14px;
+}
+
+.budget-all .field {
+  margin: 0;
+  min-width: 160px;
+}
+
+.budget-all-hint {
+  flex: 1 1 260px;
+}
+
+/* ============================================================
+   EFFEKTLAR (data-effects="on" bo'lganda ishlaydi)
+   ============================================================ */
+:root[data-effects='on'] .card,
+:root[data-effects='on'] .stat,
+:root[data-effects='on'] .subject-card,
+:root[data-effects='on'] .podium-card,
+:root[data-effects='on'] .coin-chip {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+:root[data-effects='on'] .card:hover,
+:root[data-effects='on'] .stat:hover,
+:root[data-effects='on'] .subject-card:hover {
+  box-shadow: var(--shadow);
+}
+
+:root[data-effects='on'] .stat:hover,
+:root[data-effects='on'] .subject-card:hover,
+:root[data-effects='on'] .coin-chip:hover {
+  transform: translateY(-2px);
+}
+
+:root[data-effects='on'] .content > * {
+  animation: pageIn 0.28s ease both;
+}
+
+:root[data-effects='on'] .task,
+:root[data-effects='on'] .lesson,
+:root[data-effects='on'] .subject-card,
+:root[data-effects='on'] .stat,
+:root[data-effects='on'] .sms {
+  animation: riseIn 0.3s ease both;
+}
+
+:root[data-effects='on'] .nav-item,
+:root[data-effects='on'] .rank-tab {
+  transition: background 0.16s, color 0.16s, transform 0.16s;
+}
+
+:root[data-effects='on'] .nav-item:hover {
+  transform: translateX(2px);
+}
+
+:root[data-effects='on'] .coin-chip-ic {
+  animation: coinFloat 2.6s ease-in-out infinite;
+}
+
+:root[data-effects='on'] .coins-compact-top svg {
+  animation: coinFloat 2.6s ease-in-out infinite;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes coinFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Mavzu almashganda yumshoq o'tish */
+:root {
+  --theme-fade: background 0.32s ease, color 0.32s ease, border-color 0.32s ease;
+}
+
+body,
+.sidebar,
+.topbar,
+.card,
+.stat,
+.input,
+.nav-item {
+  transition: background 0.32s ease, color 0.32s ease, border-color 0.32s ease;
+}
+
+/* Harakatni kamaytirishni so'ragan foydalanuvchilar uchun */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-effects='on'] .content > *,
+  :root[data-effects='on'] .task,
+  :root[data-effects='on'] .lesson,
+  :root[data-effects='on'] .subject-card,
+  :root[data-effects='on'] .stat,
+  :root[data-effects='on'] .sms,
+  :root[data-effects='on'] .coin-chip-ic,
+  :root[data-effects='on'] .coins-compact-top svg {
+    animation: none !important;
+  }
+}
+
+/* Topbar'dagi ixcham coin ko'rsatkichi */
+.topbar-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7e2, #fdecc4);
+  border: 1px solid var(--gold);
+  color: var(--gold-deep);
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .topbar-coins {
+  background: linear-gradient(135deg, #2a2410, #3a2f12);
+  color: var(--gold-2);
+}
+
+.topbar-coins b {
+  font-size: 14px;
+}
+
+/* Effektlar tugmasi (switch) */
+.effects-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.effects-ic {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--card-2);
+  color: var(--accent-3);
+}
+
+.effects-body {
+  flex: 1 1 auto;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.switch-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.switch.on {
+  background: rgba(46, 125, 91, 0.12);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.switch.on .switch-dot {
+  background: var(--ok);
+}
+
+:root[data-effects='on'] .theme-opt.active {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Davomat: har bir o'quvchi bloki (holat + sabab) */
+.att-block {
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.att-block:last-child {
+  border-bottom: none;
+}
+
+.att-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ci-type.staff {
+  background: rgba(107, 78, 155, 0.14);
+  color: #6B4E9B;
+}
+
+.att-locked.ok {
+  color: var(--ok);
+  border-color: rgba(46, 125, 91, 0.4);
 }

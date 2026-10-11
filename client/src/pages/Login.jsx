@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useApp } from '../store.jsx';
+import React, { useEffect, useState } from 'react';
+import { useApp, api } from '../store.jsx';
 import * as UI from '../ui.jsx';
 
 const DEMO = [
-  { role: 'student', login: 'oquvchi1', password: '1234', name: 'Aziz Karimov', extra: '8-A' },
+  { role: 'student', login: 'oquvchi1', password: '1234', name: 'Aziz Karimov', extra: '1-A' },
   { role: 'teacher', login: 'ustoz1', password: '1234', name: 'Malika Tursunova', extra: 'Matematika' },
   { role: 'director', login: 'director', password: '1234', name: 'Sardor Karimov', extra: 'Direktor' },
 ];
@@ -14,19 +14,56 @@ export default function LoginPage() {
   const { login, register, t } = useApp();
   const [role, setRole] = useState('student');
   const [mode, setMode] = useState('login'); // login | register
-  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '8-A', subject: '' });
+  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '', stream: 'ru', subject: '', inviteCode: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [classes, setClasses] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    api('/classes')
+      .then((d) => {
+        if (!alive) return;
+        const list = d.classes || [];
+        setClasses(list);
+        if (list.length && !list.some((c) => c.name === form.className)) {
+          setForm((f) => ({ ...f, className: list[0].name }));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e) => {
     e.preventDefault();
     setErr('');
+    // Xavfsizlik: direktor hisobi ilova ichida ochilmaydi
+    if (mode === 'register' && role === 'director') {
+      setErr(t('lg.directorClosed'));
+      return;
+    }
+    if (mode === 'register' && form.password.length < 8) {
+      setErr(t('lg.pwMin').replace('{n}', 8));
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'login') await login(form.login, form.password);
-      else await register({ login: form.login, password: form.password, displayName: form.displayName, role, className: form.className, subject: form.subject });
+      else
+        await register({
+          login: form.login,
+          password: form.password,
+          displayName: form.displayName,
+          role,
+          className: form.className,
+          stream: form.stream,
+          subject: form.subject,
+          inviteCode: form.inviteCode,
+        });
     } catch (ex) {
       setErr(ex.message);
     } finally {
@@ -119,17 +156,35 @@ export default function LoginPage() {
                 <input className="input" value={form.displayName} onChange={set('displayName')} placeholder="Aziz Karimov" required />
               </UI.Field>
               {role === 'student' && (
-                <UI.Field label={t('lg.pickSinf')}>
-                  <UI.Select
-                    value={form.className}
-                    onChange={set('className')}
-                    options={['8-A', '8-B', '9-A', '9-B', '10-A', '11-A'].map((c) => ({ value: c, label: c }))}
-                  />
-                </UI.Field>
+                <>
+                  <UI.Field label={t('lg.pickSinf')}>
+                    <UI.Select
+                      value={form.className}
+                      onChange={set('className')}
+                      options={classes.map((c) => ({ value: c.name, label: t('c.class') + ' ' + c.name }))}
+                    />
+                  </UI.Field>
+                  <UI.Field label={t('lg.pickGroup')} hint={t('lg.groupHint')}>
+                    <UI.Select
+                      value={form.stream}
+                      onChange={set('stream')}
+                      options={[
+                        { value: 'ru', label: t('lg.streamRu') },
+                        { value: 'uz', label: t('lg.streamUz') },
+                      ]}
+                    />
+                  </UI.Field>
+                </>
               )}
               {role === 'teacher' && (
                 <UI.Field label={t('c.subject')}>
                   <input className="input" value={form.subject} onChange={set('subject')} placeholder="Matematika" />
+                </UI.Field>
+              )}
+              {role === 'director' && <div className="alert">{t('lg.directorClosed')}</div>}
+              {role === 'teacher' && (
+                <UI.Field label={t('lg.invite')} hint={t('lg.inviteHint')}>
+                  <input className="input" value={form.inviteCode} onChange={set('inviteCode')} placeholder="••••" autoComplete="off" />
                 </UI.Field>
               )}
             </>
@@ -137,14 +192,15 @@ export default function LoginPage() {
           <UI.Field label={t('c.loginField')}>
             <input className="input" value={form.login} onChange={set('login')} placeholder="login" autoComplete="username" required />
           </UI.Field>
-          <UI.Field label={t('c.password')}>
+          <UI.Field label={t('c.password')} hint={mode === 'register' ? t('lg.pwMin').replace('{n}', 8) : undefined}>
             <input
               className="input"
               type="password"
               value={form.password}
               onChange={set('password')}
               placeholder="••••"
-              autoComplete="current-password"
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              minLength={mode === 'register' ? 8 : undefined}
               required
             />
           </UI.Field>
@@ -165,6 +221,7 @@ export default function LoginPage() {
 
         <div className="demo">
           <div className="muted tiny demo-title">{t('lg.demo')}</div>
+          <div className="muted tiny demo-warn">{t('lg.demoWarn')}</div>
           {DEMO.map((d) => (
             <button key={d.login} className="demo-row" onClick={() => quick(d)} disabled={busy}>
               <span className="role-dot" style={{ background: ROLE_TONE[d.role] }} />

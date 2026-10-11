@@ -16,5 +16,15 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: NODE_ENV
+        value: production
       # Ma'lumotlar serverda JSON fayllarda saqlanadi.
       # Free plan'da disk vaqtinchalik — har deploy'da seed qayta yaratiladi.
+      #
+      # --- XAVFSIZLIK: quyidagilarni Render panelida qo'lda qo'shing ---
+      # STAFF_INVITE_CODE   — ustoz hisobini ochish uchun uzun tasodifiy kod
+      # PASSWORD_MIN_LENGTH — masalan 10
+      # SEED_DEMO           — ishlab chiqarishda "0" (namuna hisoblar yaratilmaydi)
+      # DATA_DIR            — doimiy disk (Render Disk) ulangan bo'lsa, masalan /var/data
+      # FRAME_ANCESTORS     — "'self' https://<domeningiz>" (clickjacking himoyasi)
+      # Batafsil: README → 🛡 Xavfsizlik
