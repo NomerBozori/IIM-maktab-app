@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useApp } from '../store.jsx';
+import React, { useEffect, useState } from 'react';
+import { useApp, api } from '../store.jsx';
 import * as UI from '../ui.jsx';
 
 const DEMO = [
-  { role: 'student', login: 'oquvchi1', password: '1234', name: 'Aziz Karimov', extra: '8-A' },
+  { role: 'student', login: 'oquvchi1', password: '1234', name: 'Aziz Karimov', extra: '1-A' },
   { role: 'teacher', login: 'ustoz1', password: '1234', name: 'Malika Tursunova', extra: 'Matematika' },
   { role: 'director', login: 'director', password: '1234', name: 'Sardor Karimov', extra: 'Direktor' },
 ];
@@ -17,6 +17,24 @@ export default function LoginPage() {
   const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '8-A', subject: '', inviteCode: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [classes, setClasses] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    api('/classes')
+      .then((d) => {
+        if (!alive) return;
+        const list = d.classes || [];
+        setClasses(list);
+        if (list.length && !list.some((c) => c.name === form.className)) {
+          setForm((f) => ({ ...f, className: list[0].name }));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -137,11 +155,14 @@ export default function LoginPage() {
                 <input className="input" value={form.displayName} onChange={set('displayName')} placeholder="Aziz Karimov" required />
               </UI.Field>
               {role === 'student' && (
-                <UI.Field label={t('lg.pickSinf')}>
+                <UI.Field label={t('lg.pickSinf')} hint={t('lg.streamRu') + ' · ' + t('lg.streamUz')}>
                   <UI.Select
                     value={form.className}
                     onChange={set('className')}
-                    options={['8-A', '8-B', '9-A', '9-B', '10-A', '11-A'].map((c) => ({ value: c, label: c }))}
+                    options={classes.map((c) => ({
+                      value: c.name,
+                      label: c.name + ' — ' + (c.stream === 'ru' ? t('lg.streamRu') : t('lg.streamUz')),
+                    }))}
                   />
                 </UI.Field>
               )}

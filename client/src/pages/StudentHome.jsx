@@ -2,6 +2,33 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../store.jsx';
 import * as UI from '../ui.jsx';
 
+// Bir quti uchun kerak bo'ladigan coin (9 katak × 50)
+const COINS_PER_BOX = 450;
+
+// Ixcham, lekin ko'zga tashlanadigan coin chip'i (sarlavha yonida turadi).
+// 3×3 katta panara o'rniga: oltin ramka + progress halqa.
+function CoinChip({ coins, t }) {
+  const pct = Math.min(100, Math.round((coins / COINS_PER_BOX) * 100));
+  const left = Math.max(0, COINS_PER_BOX - coins);
+  return (
+    <div className="coin-chip" title={t('st.coinsTitle')}>
+      <span className="coin-chip-ic">
+        <UI.Icon.Coin width={20} height={20} />
+      </span>
+      <span className="coin-chip-body">
+        <b>{coins}</b>
+        <span className="muted tiny">{t('st.coinsShort')}</span>
+      </span>
+      <span className="coin-chip-bar" aria-hidden="true">
+        <i style={{ width: pct + '%' }} />
+      </span>
+      <span className="coin-chip-hint muted tiny">
+        {left > 0 ? left + ' ' + t('st.coinsGoal').toLowerCase() : t('st.coinsFull')}
+      </span>
+    </div>
+  );
+}
+
 const DAY_KEYS = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba'];
 const todayKey = () => DAY_KEYS[new Date().getDay()];
 
@@ -40,7 +67,6 @@ export default function StudentHome() {
   const done = tasks.filter((x) => x.done);
 
   const coins = data ? data.coins : 0;
-  const filled = Math.min(9, Math.floor(coins / 50));
 
   const markDone = async (id) => {
     await request('/tasks/' + id + '/done', { method: 'POST' });
@@ -54,9 +80,15 @@ export default function StudentHome() {
           <h1>
             {t('st.hello')}, {user.displayName.split(' ')[0]} 👋
           </h1>
-          <p className="muted">{user.className ? user.className + ' sinf' : ''} · {t('st.welcome')}</p>
+          <p className="muted">
+            {user.className ? user.className + ' sinf' : ''}
+            {user.streamLabel ? ' · ' + user.streamLabel : ''} · {t('st.welcome')}
+          </p>
         </div>
-        <div className="hello-date muted small">{UI.fmtDate(new Date().toISOString(), t)}</div>
+        <div className="hello-right">
+          {data && <CoinChip coins={coins} t={t} />}
+          <div className="hello-date muted small">{UI.fmtDate(new Date().toISOString(), t)}</div>
+        </div>
       </div>
 
       {err && <div className="alert">{err}</div>}
@@ -158,24 +190,22 @@ export default function StudentHome() {
             </UI.Card>
           </div>
 
-          {/* ---------- O'NG ustun: coinlar 3×3 ---------- */}
+          {/* ---------- O'NG ustun: ixcham coinlar ---------- */}
           <div className="col-coins">
+            {/* Ixcham coin kartasi — katta panara o'rniga (joyni egallamaydi) */}
             <UI.Card title={t('st.coinsTitle')} icon={<UI.Icon.Coin />} tone="coin-card" className="coins-sticky">
-              <div className="coins-total">
-                <span className="coins-big">{coins}</span>
-                <span className="muted tiny">{t('c.coin')}</span>
-              </div>
-              <div className="coin-grid" aria-label={t('c.coins')}>
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div key={i} className={'coin-cell' + (i < filled ? ' on' : ' ' ) + (i === 4 ? ' center' : '')}>
-                    {i === 4 ? <span className="coin-center-num">{coins}</span> : <UI.Icon.Coin width={22} height={22} />}
-                  </div>
-                ))}
-              </div>
-              <div className="muted tiny center">{t('st.coinsHint')}</div>
-              <UI.Bar value={Math.min(100, (coins / 450) * 100)} color="#C9A227" />
-              <div className="coins-next muted tiny">
-                {450 - coins > 0 ? 450 - coins + " coin qoldi → to'liq quti" : "To'liq quti! 🎉"}
+              <div className="coins-compact">
+                <div className="coins-compact-top">
+                  <span className="coins-big">{coins}</span>
+                  <span className="muted tiny">{t('c.coin')}</span>
+                  <UI.Icon.Coin width={26} height={26} />
+                </div>
+                <UI.Bar value={Math.min(100, (coins / COINS_PER_BOX) * 100)} color="#C9A227" />
+                <div className="muted tiny">
+                  {COINS_PER_BOX - coins > 0
+                    ? t('st.coinsGoal') + ': ' + (COINS_PER_BOX - coins) + ' ' + t('st.coinsShort')
+                    : t('st.coinsFull') + ' 🎉'}
+                </div>
               </div>
             </UI.Card>
 

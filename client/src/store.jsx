@@ -94,6 +94,8 @@ const T = {
     en: 'Demo accounts — remove them in production',
   },
   'lg.pickSinf': { uz: 'Sinfingizni tanlang', ru: 'Выберите класс', en: 'Choose your class' },
+  'lg.streamRu': { uz: 'A — rus tili', ru: 'A — русский язык', en: 'A — Russian' },
+  'lg.streamUz': { uz: 'B — o\'zbek tili', ru: 'B — узбекский язык', en: 'B — Uzbek' },
   'lg.studentDesc': { uz: "Coinlar, baholar, reyting, chat", ru: 'Монеты, оценки, рейтинг, чат', en: 'Coins, grades, ranking, chat' },
   'lg.teacherDesc': { uz: 'Vazifa, davomat, dars jadvali, chat', ru: 'Задания, посещаемость, расписание, чат', en: 'Tasks, attendance, schedule, chat' },
   'lg.directorDesc': { uz: 'Coin belgilash, davomat nazorati, chat', ru: 'Монеты, контроль посещаемости, чат', en: 'Coin budgets, attendance control, chat' },
@@ -112,6 +114,9 @@ const T = {
   // o'quvchi
   'st.coinsTitle': { uz: 'Mening coinlarim', ru: 'Мои монеты', en: 'My coins' },
   'st.coinsHint': { uz: 'Har belgi 50 coin', ru: 'Каждый значок — 50 монет', en: 'Each icon = 50 coins' },
+  'st.coinsShort': { uz: 'coin', ru: 'монет', en: 'coins' },
+  'st.coinsGoal': { uz: 'Keyingi qutigacha', ru: 'До следующей коробки', en: 'To next box' },
+  'st.coinsFull': { uz: 'Quti to\'ldi!', ru: 'Коробка полна!', en: 'Box full!' },
   'st.tasksTitle': { uz: 'Ustozlar bergan vazifalar', ru: 'Задания от учителей', en: 'Tasks from teachers' },
   'st.tasksEmpty': { uz: 'Hozircha vazifa yo\'q', ru: 'Пока нет заданий', en: 'No tasks yet' },
   'st.markDone': { uz: 'Bajarildi', ru: 'Выполнено', en: 'Mark done' },
@@ -156,10 +161,25 @@ const T = {
   'tc.attendanceTitle': { uz: 'Davomat', ru: 'Посещаемость', en: 'Attendance' },
   'tc.attendanceDesc': { uz: "O'zingiz biriktirilgan sinfning davomatini to'ldiring", ru: 'Заполните посещаемость закреплённого за вами класса', en: 'Fill in attendance for your assigned class' },
   'tc.keldi': { uz: 'Keldi', ru: 'Пришёл', en: 'Present' },
-  'tc.ketdi': { uz: 'Ketdi', ru: 'Ушёл', en: 'Left' },
-  'tc.kirmadi': { uz: 'Kirmadi', ru: 'Не пришёл', en: 'Absent' },
+  'tc.kelmadi': { uz: 'Kelmadi', ru: 'Не пришёл', en: 'Absent' },
+  'tc.reason': { uz: 'Sabab', ru: 'Причина', en: 'Reason' },
+  'tc.reasonKasallik': { uz: 'Kasallik', ru: 'Болезнь', en: 'Illness' },
+  'tc.reasonOilaviy': { uz: 'Oilaviy sabab', ru: 'Семейные обстоятельства', en: 'Family reason' },
+  'tc.reasonBoshqa': { uz: 'Boshqa', ru: 'Другое', en: 'Other' },
+  'tc.reasonNote': { uz: 'Izoh (ixtiyoriy)', ru: 'Комментарий (необязательно)', en: 'Note (optional)' },
   'tc.saveAttendance': { uz: 'Davomatni saqlash', ru: 'Сохранить посещаемость', en: 'Save attendance' },
+  'tc.updateAttendance': { uz: 'Davomatni yangilash', ru: 'Обновить посещаемость', en: 'Update attendance' },
   'tc.attendanceSaved': { uz: 'Davomat saqlandi', ru: 'Посещаемость сохранена', en: 'Attendance saved' },
+  'tc.attendanceUpdated': { uz: 'Davomat yangilandi', ru: 'Посещаемость обновлена', en: 'Attendance updated' },
+  'tc.marked': { uz: 'belgilandi', ru: 'отмечено', en: 'marked' },
+  'tc.markAllFirst': { uz: 'Saqlash uchun sinfdagi hamma o\'quvchini belgilang', ru: 'Чтобы сохранить, отметьте всех учеников класса', en: 'Mark every student in the class to save' },
+  'tc.allMarked': { uz: 'Hamma belgilandi — saqlash mumkin', ru: 'Все отмечены — можно сохранять', en: 'All marked — ready to save' },
+  'tc.locked': { uz: '24 soat o\'tdi — o\'zgartirib bo\'lmaydi', ru: 'Прошло 24 часа — изменения запрещены', en: 'Locked after 24 hours' },
+  'tc.editableFor': { uz: 'Tahrirlash mumkin', ru: 'Можно редактировать', en: 'Editable' },
+  'tc.editWindow': { uz: 'Saqlangandan keyin 24 soat ichida o\'zgartirish mumkin', ru: 'Изменить можно в течение 24 часов после сохранения', en: 'Editable within 24 hours after saving' },
+  'tc.savedDay': { uz: 'Saqlangan', ru: 'Сохранено', en: 'Saved' },
+  'tc.streamRu': { uz: 'Rus tili', ru: 'Русский язык', en: 'Russian stream' },
+  'tc.streamUz': { uz: 'O\'zbek tili', ru: 'Узбекский язык', en: 'Uzbek stream' },
   'tc.compute': { uz: 'Davomatni hisoblash', ru: 'Посчитать посещаемость', en: 'Compute attendance' },
   'tc.students': { uz: "O'quvchilar", ru: 'Ученики', en: 'Students' },
   'tc.pickStudent': { uz: 'Coin berish uchun o\'quvchini tanlang', ru: 'Выберите ученика, чтобы выдать монеты', en: 'Pick a student to give coins' },
@@ -170,12 +190,20 @@ const T = {
   'tc.noSms': { uz: 'Xabar yo\'q', ru: 'Нет сообщений', en: 'No messages' },
   'tc.myClasses': { uz: 'Mening sinflarim', ru: 'Мои классы', en: 'My classes' },
   'tc.classChat': { uz: 'Sinf chati', ru: 'Чат класса', en: 'Class chat' },
+  'tc.staffChat': { uz: 'Ustozlar va direktor chati', ru: 'Чат учителей и директора', en: 'Teachers & director chat' },
+  'tc.staffSub': { uz: 'Umumiy chat — hamma ustoz va direktor yoza oladi', ru: 'Общий чат — писать могут все учителя и директор', en: 'Shared chat — all teachers and the director can write' },
+  'tc.staffMembers': { uz: 'ustoz va direktor', ru: 'учителей и директор', en: 'teachers & director' },
   'tc.individualChat': { uz: 'Har bir o\'quvchi bilan alohida chat', ru: 'Отдельный чат с каждым учеником', en: 'Individual chat with each student' },
 
   // direktor
   'dr.budgetTitle': { uz: 'Ustozlarga oylik coin belgilash', ru: 'Назначить месячные монеты учителям', en: 'Set monthly coins for teachers' },
   'dr.budgetDesc': { uz: 'Har oy har bir ustozga qancha coin tushishini belgilang', ru: 'Укажите, сколько монет получает каждый учитель каждый месяц', en: 'Set how many coins each teacher receives each month' },
   'dr.setBudget': { uz: 'Coin belgilash', ru: 'Назначить монеты', en: 'Set coins' },
+  'dr.budgetAllTitle': { uz: 'Hamma ustozga birdan', ru: 'Всем учителям сразу', en: 'All teachers at once' },
+  'dr.budgetAllHint': { uz: 'Bitta miqdor kiriting — shu oy uchun hamma ustozga bir xil limit qo\'yiladi', ru: 'Введите одну сумму — одинаковый лимит на месяц для всех учителей', en: 'Enter one amount — the same monthly limit for every teacher' },
+  'dr.setAll': { uz: 'Hammaga belgilash', ru: 'Назначить всем', en: 'Set for all' },
+  'dr.allSaved': { uz: 'Hamma ustozga belgilandi', ru: 'Назначено всем учителям', en: 'Set for all teachers' },
+  'dr.perTeacher': { uz: 'Alohida tuzatish', ru: 'Индивидуально', en: 'Per teacher' },
   'dr.budgetSaved': { uz: 'Coin belgilandi', ru: 'Монеты назначены', en: 'Coins set' },
   'dr.monitorTitle': { uz: 'Davomat nazorati', ru: 'Контроль посещаемости', en: 'Attendance monitor' },
   'dr.monitorDesc': { uz: "Agar ustoz davomat qilmasa, uning ilovasiga SMS xabar tushadi", ru: 'Если учитель не заполнит посещаемость, в его приложение придёт SMS', en: 'If a teacher does not submit attendance, an SMS goes to their app' },
@@ -196,6 +224,13 @@ const T = {
   'stt.display': { uz: 'Ko\'rinish', ru: 'Оформление', en: 'Display' },
   'stt.light': { uz: 'Yorug\'', ru: 'Светлая', en: 'Light' },
   'stt.dark': { uz: 'Qorong\'i', ru: 'Тёмная', en: 'Dark' },
+  'stt.auto': { uz: 'Avtomatik', ru: 'Автоматически', en: 'Auto' },
+  'stt.autoHint': { uz: 'Tizim sozlamasiga moslashadi', ru: 'Подстраивается под систему', en: 'Follows the system setting' },
+  'stt.effects': { uz: 'Effektlar va animatsiyalar', ru: 'Эффекты и анимации', en: 'Effects & animations' },
+  'stt.effectsOn': { uz: 'Yoniq', ru: 'Включены', en: 'On' },
+  'stt.effectsOff': { uz: 'O\'chiq', ru: 'Выключены', en: 'Off' },
+  'stt.effectsDesc': { uz: 'Sahifa o\'tishlari, karta effektlari, coin animatsiyasi', ru: 'Переходы страниц, эффекты карточек, анимация монет', en: 'Page transitions, card effects, coin animation' },
+  'stt.compact': { uz: 'Ixcham ko\'rinish', ru: 'Компактный вид', en: 'Compact view' },
   'stt.language': { uz: 'Til', ru: 'Язык', en: 'Language' },
   'stt.profile': { uz: 'Profil', ru: 'Профиль', en: 'Profile' },
   'stt.changeName': { uz: 'Ismni o\'zgartirish', ru: 'Изменить имя', en: 'Change display name' },
@@ -235,9 +270,9 @@ const T = {
   'fq.q5': { uz: 'Tilni o\'zgartirsam bo\'ladimi?', ru: 'Можно ли изменить язык?', en: 'Can I change the language?' },
   'fq.a5': { uz: "Ha. Sozlamalar → Til bo'limidan o'zbek, rus va ingliz tillaridan birini tanlashingiz mumkin.", ru: 'Да. В «Настройки → Язык» можно выбрать узбекский, русский или английский.', en: 'Yes. In Settings → Language you can pick Uzbek, Russian or English.' },
   'fq.q6': { uz: 'Davomat nima uchun kerak?', ru: 'Зачем нужна посещаемость?', en: 'What is attendance for?' },
-  'fq.a6': { uz: "Ustoz har darsda «keldi», «ketdi» yoki «kirmadi» deb belgilaydi. Direktor esa kim davomat qilmaganini kuzatib, eslatma SMS yuboradi.", ru: 'Учитель отмечает «пришёл», «ушёл» или «не пришёл» на каждом уроке. Директор отслеживает, кто не заполнил посещаемость, и отправляет напоминание.', en: "Teachers mark 'present', 'left' or 'absent' each lesson. The director tracks who has not submitted and sends a reminder SMS." },
+  'fq.a6': { uz: "Ustoz har darsda har bir o'quvchini «keldi» yoki «kelmadi» deb belgilaydi; kelmagan bo'lsa sababi ham yoziladi. Hamma o'quvchi belgilanmaguncha saqlanmaydi, saqlangandan keyin esa 24 soat ichida tahrirlash mumkin. Direktor kim davomat qilmaganini kuzatib, eslatma SMS yuboradi.", ru: 'Учитель отмечает каждого ученика как «пришёл» или «не пришёл», указывая причину отсутствия. Пока отмечены не все, сохранить нельзя; после сохранения правка доступна 24 часа. Директор видит, кто не заполнил посещаемость, и отправляет SMS.', en: "The teacher marks every student as 'present' or 'absent' with the reason. Saving is blocked until everyone is marked, and edits stay open for 24 hours. The director tracks who has not submitted and sends a reminder SMS." },
   'fq.q7': { uz: 'Qorong\'i rejimni qanday yoqaman?', ru: 'Как включить тёмную тему?', en: 'How do I enable dark mode?' },
-  'fq.a7': { uz: "Sozlamalar → Ko'rinish bo'limida «Yorug'» yoki «Qorong'i» ni tanlang.", ru: 'В «Настройки → Оформление» выберите «Светлая» или «Тёмная».', en: 'In Settings → Display choose “Light” or “Dark”.' },
+  'fq.a7': { uz: "Sozlamalar → Ko'rinish bo'limida «Yorug'», «Qorong'i» yoki «Avtomatik» ni tanlang (avtomatik — qurilma soatiga qarab). Shu bo'limda «Effektlar» tugmasi bilan animatsiyalarni yoqib/o'chirish mumkin.", ru: 'В «Настройки → Оформление» выберите «Светлая», «Тёмная» или «Авто» (по настройке устройства). Там же переключателем «Эффекты» можно включить или отключить анимации.', en: "In Settings → Display choose 'Light', 'Dark' or 'Auto' (follows your device). The 'Effects' switch in the same section turns animations on or off." },
 
   // kunlar
   'd.dushanba': { uz: 'Dushanba', ru: 'Понедельник', en: 'Monday' },
@@ -289,13 +324,31 @@ export function AppProvider({ children }) {
       return null;
     }
   });
+  // Mavzu: 'light' | 'dark' | 'auto' (tizim sozlamasiga moslashadi)
   const [theme, setTheme] = useState(() => localStorage.getItem('im_theme') || 'light');
+  // Effektlar: 'on' | 'off' — animatsiyalar va o'tishlar
+  const [effects, setEffects] = useState(() => localStorage.getItem('im_effects') || 'on');
   const [lang, setLang] = useState(() => localStorage.getItem('im_lang') || 'uz');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    const mq = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? (() => { try { return window.matchMedia('(prefers-color-scheme: dark)'); } catch (e) { return null; } })()
+      : null;
+    const resolve = () => (theme === 'auto' ? (mq && mq.matches ? 'dark' : 'light') : theme);
+    const apply = () => document.documentElement.setAttribute('data-theme', resolve());
+    apply();
     localStorage.setItem('im_theme', theme);
+    if (mq && mq.addEventListener) {
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
+    return undefined;
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-effects', effects);
+    localStorage.setItem('im_effects', effects);
+  }, [effects]);
 
   useEffect(() => {
     document.documentElement.setAttribute('lang', lang);
@@ -365,8 +418,8 @@ export function AppProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ token, user, theme, setTheme, lang, setLang, t, request, login, register, logout, updateUser }),
-    [token, user, theme, lang, t, request, login, register, logout, updateUser]
+    () => ({ token, user, theme, setTheme, effects, setEffects, lang, setLang, t, request, login, register, logout, updateUser }),
+    [token, user, theme, effects, lang, t, request, login, register, logout, updateUser]
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

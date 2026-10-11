@@ -46,16 +46,18 @@ if (!dom.window.Element.prototype.attachEvent) {
   dom.window.Element.prototype.detachEvent = function () {};
 }
 
-// --- Sana: test hafta kuniga bog'liq bo'lmasligi uchun qat'iy "dushanba"
-// (2026-10-12) qilib qo'yamiz. Server tomonda haqiqiy sana qoladi.
-const FIXED_NOW = new Date('2026-10-12T09:00:00');
+// --- Sana: test hafta kuniga bog'liq bo'lmasligi uchun "dushanba"ga
+// suriladi (2026-10-12 - dushanba). Soat esa REAL yuradi: Date.now()
+// muzlab qolsa kutish tsikllari (waitFor) hech qachon tugamaydi.
 const RealDate = Date;
+const DAY_SHIFT = RealDate.parse('2026-10-12T09:00:00') - RealDate.parse('2026-10-11T09:00:00'); // yakshanba → dushanba
+const SUNDAY_OFFSET = RealDate.parse('2026-10-11T00:00:00') - (RealDate.now() - RealDate.now() % 86400000);
 function FakeDate(...args) {
-  if (args.length === 0) return new RealDate(FIXED_NOW);
+  if (args.length === 0) return new RealDate(RealDate.now() + SUNDAY_OFFSET + DAY_SHIFT);
   return new RealDate(...args);
 }
 FakeDate.prototype = RealDate.prototype;
-FakeDate.now = () => FIXED_NOW.getTime();
+FakeDate.now = () => RealDate.now();
 FakeDate.parse = RealDate.parse;
 FakeDate.UTC = RealDate.UTC;
 defineGlobal('Date', FakeDate);
@@ -123,7 +125,26 @@ function findBtn(text, sel) {
 function setValue(input, value) {
   const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
   setter.call(input, value);
+  // Oddiy DOM hodisasi (ilova o'z tinglovchisini qo'shgan bo'lsa ishlaydi)
   input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  input.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  // React 18 + jsdom birikmasida DOM hodisasi React'ning onChange'ini
+  // uyg'otmaydi — shu sababli React props'idagi onChange'ni to'g'ridan-to'g'ri
+  // chaqiramiz (bu — react-dom/test-utils'dagi Simulate.change bilan bir xil yo'l).
+  const key = Object.keys(input).find((k) => k.startsWith('__reactProps$'));
+  const props = key ? input[key] : null;
+  const change = props && (props.onChange || props.onInput);
+  if (typeof change === 'function') {
+    change({
+      target: input,
+      currentTarget: input,
+      type: 'change',
+      nativeEvent: { target: input },
+      persist() {},
+      preventDefault() {},
+      stopPropagation() {},
+    });
+  }
 }
 
 // shart bajarilguncha kutish: "xato bermadi" = muvaffaqiyat
@@ -201,8 +222,11 @@ await step(
   },
   () => {
     need('.student-home', 'student-home');
-    const grid = need('.coin-grid', 'coin grid');
-    if (grid.children.length !== 9) throw new Error("coin-grid da 9 katak yo'q: " + grid.children.length);
+    // Coinlar ixcham ko'rinishda: sarlavhada chip + o'ng ustunda kichik karta
+    need('.coin-chip', 'coin chip (sarlavha yonida)');
+    need('.coins-compact', 'ixcham coin kartasi');
+    if (document.querySelector('.coin-grid')) throw new Error("katta 3×3 panara hali ham ko'rinib turibdi");
+    need('.topbar-coins', "yuqori paneldagi coin ko'rsatkichi");
     need('.subject-grid', 'fanlar boyicha baholar');
     need('.lesson-list', 'dars jadvali');
     need('.task-list', 'vazifalar');
@@ -276,28 +300,51 @@ await step(
   8000
 );
 
-await doStep('sozlamalar: korinish / til / FAQ', () => {
+await doStep('sozlamalar: korinish / til / FAQ', async () => {
+  const pause = () => sleep(40); // React qayta render qilishiga imkon
   const dark = [...document.querySelectorAll('.theme-opt')].find((b) => b.textContent.includes("Qorong'i"));
   if (!dark) throw new Error("qorong'i rejim tugmasi topilmadi");
   dark.click();
+  await pause();
+  const auto = [...document.querySelectorAll('.theme-opt')].find((b) => b.textContent.includes('Avtomatik'));
+  if (auto) auto.click();
+  await pause();
+  const effects = document.querySelector('.switch');
+  if (effects) effects.click(); // effektlarni o'chirib ko'ramiz
+  await pause();
   const ru = [...document.querySelectorAll('.lang-opt')].find((b) => b.textContent.includes('Русский'));
   if (!ru) throw new Error('rus tili tugmasi topilmadi');
   ru.click();
+  await pause();
   const en = [...document.querySelectorAll('.lang-opt')].find((b) => b.textContent.includes('English'));
   if (!en) throw new Error('ingliz tili tugmasi topilmadi');
   en.click();
+  await pause();
   const uz = [...document.querySelectorAll('.lang-opt')].find((b) => b.textContent.includes("O'zbek"));
   if (!uz) throw new Error("o'zbek tili tugmasi topilmadi");
   uz.click();
+  await pause();
   // FAQ: birinchisi standart bo'yicha ochiq; boshqasini ochib ko'ramiz
   const faqs = document.querySelectorAll('.faq-q');
   faqs[faqs.length > 1 ? 1 : 0].click();
 });
 
+await checkStep('sozlamalar: effektlar o\'chirildi', () => {
+  if (document.documentElement.getAttribute('data-effects') !== 'off') throw new Error('effektlar o\'chirilmadi');
+}, 8000);
+
+await doStep('sozlamalar: effektlarni qayta yoqamiz', () => {
+  const sw = document.querySelector('.switch');
+  if (!sw) throw new Error('effektlar tugmasi topilmadi');
+  sw.click();
+});
+
 await checkStep(
-  'sozlamalar natijalari (dark + 3 til + FAQ)',
+  'sozlamalar natijalari (avtomatik mavzu + effektlar + til + FAQ)',
   () => {
-    if (document.documentElement.getAttribute('data-theme') !== 'dark') throw new Error('dark mode ishlamadi');
+    const theme = document.documentElement.getAttribute('data-theme');
+    if (theme !== 'dark' && theme !== 'light') throw new Error('mavzu qo\'llanmadi: ' + theme);
+    if (document.documentElement.getAttribute('data-effects') !== 'on') throw new Error('effektlar yoqilmadi');
     if (document.documentElement.getAttribute('lang') !== 'uz') throw new Error('til uz ga qaytmadi');
     if (!document.querySelector('.faq-a, .faq-item.open')) throw new Error('FAQ javobi ochilmadi');
   },
@@ -326,6 +373,21 @@ await checkStep('ustoz paneli (byudjet, coin, vazifa)', () => {
   need('.teacher-home', 'teacher-home');
   need('.budget-figures', 'coin byudjeti');
 }, 8000);
+
+await step(
+  'ustoz: umumiy chat (ustozlar + direktor)',
+  async () => {
+    nav('Chat').click();
+  },
+  () => {
+    need('.chat-page', 'chat');
+    const items = [...document.querySelectorAll('.chat-item')];
+    const staff = items.find((x) => x.textContent.includes('Ustozlar va direktor'));
+    if (!staff) throw new Error('umumiy xona topilmadi. Mavjud: ' + items.map((x) => x.textContent.trim().slice(0, 24)).join(' | '));
+    staff.click();
+  },
+  8000
+);
 
 // ============================================================
 //  8. Ustoz: vazifalar
@@ -358,7 +420,11 @@ await step(
 );
 
 // ============================================================
-//  10. Ustoz: davomat
+//  10. Ustoz: davomat (yangi qoidalar)
+//     * keldi / kelmadi (ketdi yo'q)
+//     * kelmadi uchun sabab majburiy
+//     * hamma belgilanmaguncha saqlanmaydi
+//     * 24 soat ichida tahrir mumkin
 // ============================================================
 await step(
   'ustoz: davomat sahifasi',
@@ -367,16 +433,81 @@ await step(
   },
   () => {
     need('.teacher-attendance', 'davomat');
-    const btn = document.querySelector('.att-btn');
-    if (btn) btn.click();
+    const rows = document.querySelectorAll('.att-row');
+    if (rows.length < 2) throw new Error("o'quvchi qatorlari kam: " + rows.length);
+    // "Ketdi" tugmasi bo'lmasligi kerak
+    const labels = [...document.querySelectorAll('.att-btn')].map((b) => b.textContent).join('|');
+    if (labels.includes('Ketdi')) throw new Error('eski "Ketdi" tugmasi hali ham bor');
+    // Chala saqlashga urinamiz: birinchi o'quvchini "kelmadi" qilamiz
+    const bad = document.querySelector('.att-btn.bad');
+    if (bad) bad.click();
   },
   8000
 );
 
-await checkStep('ustoz: davomatni saqlash', () => {
-  const save = findBtn('Davomatni saqlash');
+await checkStep('ustoz: "kelmadi" uchun sabab tanlanadi', () => {
+  const reason = need('.att-reason', 'sabab bloki');
+  const kasallik = [...reason.querySelectorAll('.reason-btn')].find((b) => b.textContent.includes('Kasallik'));
+  if (!kasallik) throw new Error('Kasallik tugmasi topilmadi');
+  kasallik.click();
+  // Hamma belgilanmaguncha saqlash tugmasi o'chirilgan (disabled)
+  const save = findBtn('Davomatni saqlash') || findBtn('Davomatni yangilash');
   if (!save) throw new Error('saqlash tugmasi topilmadi');
+  if (!save.disabled) throw new Error('hamma belgilanmasdan saqlash tugmasi faol');
+}, 8000);
+
+await step(
+  'ustoz: hamma o\'quvchini belgilab saqlash',
+  async () => {
+    // Qolgan o'quvchilarni "keldi" qilamiz
+    [...document.querySelectorAll('.att-btn.good')].forEach((b) => {
+      if (!b.classList.contains('active')) b.click();
+    });
+  },
+  () => {
+    const save = findBtn('Davomatni saqlash');
+    if (!save) throw new Error('saqlash tugmasi topilmadi');
+    if (save.disabled) throw new Error('hamma belgilangandan keyin ham tugma faol emas');
+    save.click();
+  },
+  8000
+);
+
+await checkStep('ustoz: davomat saqlandi va tahrir oynasi ko\'rinadi', () => {
+  const ok = document.querySelector('.alert.ok');
+  if (!ok) throw new Error("saqlangani haqida xabar yo'q");
+  const locked = need('.att-locked', 'tahrir holati');
+  if (!locked.textContent.trim()) throw new Error('tahrir holati matni bo\'sh');
+}, 8000);
+
+await step(
+  'ustoz: davomatni 24 soat ichida tahrirlash',
+  async () => {
+    // Bitta o'quvchini "kelmadi" qilib, sababini almashtiramiz
+    const bad = document.querySelector('.att-btn.bad');
+    if (bad) bad.click();
+  },
+  () => {
+    const reason = need('.att-reason', 'sabab bloki');
+    const oilaviy = [...reason.querySelectorAll('.reason-btn')].find((b) => b.textContent.includes('Oilaviy'));
+    if (!oilaviy) throw new Error('Oilaviy sabab tugmasi topilmadi');
+    oilaviy.click();
+  },
+  8000
+);
+
+await checkStep('ustoz: davomat yangilandi (dublikat yo\'q)', () => {
+  const save = findBtn('Davomatni yangilash');
+  if (!save) throw new Error('"Davomatni yangilash" tugmasi topilmadi');
+  if (save.disabled) throw new Error('yangilash tugmasi faol emas');
   save.click();
+}, 8000);
+
+await checkStep('ustoz: yangilangan davomat hisoblanadi', () => {
+  const compute = findBtn('Davomatni hisoblash');
+  if (compute) compute.click();
+  const ok = document.querySelector('.alert.ok');
+  if (!ok) throw new Error('yangilangani haqida xabar yo\'q');
 }, 8000);
 
 // ============================================================
@@ -413,12 +544,43 @@ await doStep('direktor: SMS yuborish', () => {
   sms.click();
 });
 
-await checkStep('direktor: SMS log + coin belgilash', () => {
+await doStep('direktor: hamma ustozga birdan limit yozish (650)', () => {
+  need('.budget-all', 'hammaga birdan bloki');
+  const input = document.querySelector('.budget-all .input');
+  if (!input) throw new Error('umumiy miqdor maydoni topilmadi');
+  setValue(input, '650');
+});
+
+// Muhim: yozish va bosish ALOHIDA act doiralarida bo'lishi kerak —
+// aks holda bosish eski (yangilanmagan) holat bilan ishlaydi.
+await doStep('direktor: hamma ustozga birdan limit belgilash', () => {
+  const all = findBtn('Hammaga belgilash');
+  if (!all) throw new Error('"Hammaga belgilash" tugmasi topilmadi');
+  all.click();
+});
+
+await checkStep('direktor: "hammaga belgilash" bajarildi', () => {
+  const ok = document.querySelector('.alert.ok');
+  if (!ok) throw new Error("belgilangani haqida xabar yo'q");
+}, 8000);
+
+await checkStep('direktor: limit hammaniki bir xil bo\'ldi', () => {
+  // "Hammaga belgilash" dan keyin jadvaldagi "qolgan" ustuni (amount − tarqatilgan)
+  // har bir ustoz uchun 650 bo'lishi kerak.
+  const block = document.querySelector('.budget-all');
+  if (!block) throw new Error('hammaga belgilash bloki topilmadi');
+  const card = block.closest('.card') || block.parentElement;
+  const cells = [...card.querySelectorAll('table.table tbody tr td.right.strong')].map((c) => c.textContent.trim());
+  if (!cells.length) throw new Error('ustozlar jadvali topilmadi');
+  const wrong = cells.filter((v) => v !== '650');
+  if (wrong.length) {
+    const ok = document.querySelector('.alert.ok');
+    throw new Error('hamma ustozga 650 qo\'yilmadi: ' + cells.join(',') + ' | xabar: ' + (ok ? ok.textContent : 'yo\'q'));
+  }
+}, 8000);
+
+await checkStep('direktor: SMS log', () => {
   need('.sms-log', 'SMS log');
-  const input = document.querySelector('.tiny-input');
-  if (input) setValue(input, '777');
-  const save = findBtn('Coin belgilash');
-  if (save) save.click();
 }, 8000);
 
 // ============================================================

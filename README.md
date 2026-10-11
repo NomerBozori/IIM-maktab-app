@@ -82,9 +82,10 @@ Barcha parollar: **`1234`**
 |---|---|---|
 | `director` | 👔 Direktor | Coin belgilash, davomat nazorati, SMS |
 | `ustoz1` … `ustoz9` | 👨‍🏫 Ustoz | Byudjet, vazifa, jadval, davomat |
-| `oquvchi1` … `oquvchi40` | 🎒 O'quvchi | Coinlar, baholar, reyting, chat |
+| `oquvchi1` … `oquvchi66` | 🎒 O'quvchi | Coinlar, baholar, reyting, chat |
 
-Seed ma'lumotlar: 9 ustoz, 6 sinf (8-A, 8-B, 9-A, 9-B, 10-A, 11-A), 40 o'quvchi.
+Seed ma'lumotlar: 9 ustoz, **22 sinf (1–11, har biri A va B)** va 66 o'quvchi.
+Sinf belgisi: **A — rus tili**, **B — o'zbek tili** (masalan `2-A — Rus tili`).
 
 > ⚠️ Bu akkauntlar faqat namoyish uchun. Ilova demo hisoblar uchun
 > «namuna parol» ogohlantirishini ko'rsatadi. Ishlab chiqarishda
@@ -96,29 +97,37 @@ Seed ma'lumotlar: 9 ustoz, 6 sinf (8-A, 8-B, 9-A, 9-B, 10-A, 11-A), 40 o'quvchi.
 ## 👥 Rollar va imkoniyatlar
 
 ### 🎒 O'quvchi
-- **3×3 coin panarasi** — markadagi katakda oylik coin yig'indisi, atrofdagi
-  kataklarda fanlar bo'yicha baholar
-- **Kunlik dars jadvali** — coinlar ostida
-- **Vazifalar** — coinlar ustida
+- **Ixcham coin ko'rsatkichi** — o'quvchi ismi yonida oltin «coin» nishoni,
+  tepada esa 15 sekundda yangilanib turuvchi kichik hisoblagich (katta 3×3
+  panara olib tashlangan — endi asosiy mazmunga xalaqit bermaydi)
+- **Kunlik dars jadvali** va **vazifalar**
+- **Baholar** — fanlar bo'yicha (coin kartasi ostida, ixcham ro'yxat)
 - **Reyting** — uchta alohida bo'lim: coinlar / davomat / oylik monitoring
-- **Chat** — barcha biriktirilgan ustozlar + sinf umumiy guruhi
-- **Sozlamalar** — yorug'i/qorong'i rejim, uz/ru/en til, FAQ, parol, ism
+- **Chat** — biriktirilgan ustozlar + sinf umumiy guruhi
+- **Sozlamalar** — yorug'i / qorong'i / **avtomatik** rejim, **effektlar**
+  (animatsiya) tugmasi, uz/ru/en til, FAQ, parol, ism
 - **Tengdoshlar profili** — faqat statistika ko'rinadi
 
 ### 👨‍🏫 Ustoz
 - **Oylik coin byudjeti** — belgilangan miqdorni o'quvchilarga taqsimlash
 - **Uy vazifasi berish** — sinf va fanga biriktirish
 - **Haftalik dars jadvali** — soatlar bilan
-- **Davomat** — keldi / ketdi / kelmadi + avtomatik hisoblash
-- **Chat** — sinf guruhlari + har bir o'quvchi bilan alohida
+- **Davomat (v2)** — har bir o'quvchi uchun **«keldi» / «kelmadi»**; kelmagan
+  bo'lsa sabab majburiy (kasallik / oilaviy sabab / boshqa + izoh). Hamma
+  o'quvchi belgilanmaguncha **saqlash tugmasi bloklanadi**; saqlangandan keyin
+  **24 soat ichida tahrirlash** mumkin, keyin o'qish uchun ochiq bo'ladi
+  (`ATT_EDIT_WINDOW_MINUTES` bilan sozlanadi)
+- **Chat** — «Ustozlar va direktor» umumiy xonasi (barcha ustozlar + direktor)
+  va o'z sinfidagi har bir o'quvchi bilan alohida
 - **Sozlamalar** — o'quvchi bilan bir xil (reyting yo'q)
 
 ### 👔 Direktor
-- **Har ustozga oylik coin belgilash**
+- **Oylik coin belgilash** — har bir ustozga alohida **yoki bir tugma bilan
+  hammasiga birdan** (bitta miqdor kiriting → «Hammaga belgilash»)
 - **Davomat nazorati** — kim davomatni to'ldirmaganini ko'rish
 - **SMS** — davomat to'ldirilmagan ustozga ogohlantirish yuborish
   (`Bu ustoz {sinflar} sinf(lar)ining davomatini qilmadi. Iltimos, davomatni to'ldiring.`)
-- **Chat** — barcha ustozlar bilan
+- **Chat** — «Ustozlar va direktor» umumiy xonasi
 - **Sozlamalar** — o'quvchi bilan bir xil
 
 ---
@@ -130,7 +139,7 @@ Seed ma'lumotlar: 9 ustoz, 6 sinf (8-A, 8-B, 9-A, 9-B, 10-A, 11-A), 40 o'quvchi.
 | **Backend** | Node.js + Express + CORS (CommonJS) |
 | **Frontend** | React 18 + React Router 6 + Vite 5 |
 | **Ma'lumotlar** | JSON fayllar (`server/data/`) — avtomatik seed |
-| **Uslublar** | Sof CSS (o'zgaruvchilar + yorug'i/qorong'i rejim) |
+| **Uslublar** | Sof CSS (o'zgaruvchilar, yorug'i/qorong'i/avtomatik rejim, animatsiyalar) |
 | **Ikonkalar** | Inline SVG (tashqi kutubxona yo'q) |
 | **Test** | Node + jsdom smoke test |
 
@@ -142,7 +151,7 @@ Seed ma'lumotlar: 9 ustoz, 6 sinf (8-A, 8-B, 9-A, 9-B, 10-A, 11-A), 40 o'quvchi.
 school-app/
 ├── server/
 │   ├── index.js           # To'liq REST API + xavfsizlik (port 4000)
-│   ├── security-test.mjs  # 36 ta xavfsizlik tekshiruvi
+│   ├── security-test.mjs  # 47 ta xavfsizlik tekshiruvi
 │   ├── package.json
 │   └── data/              # Avtomatik yaratiladigan JSON (git'da yo'q)
 │
@@ -151,7 +160,7 @@ school-app/
 │   ├── vite.config.js    # /api → http://localhost:4000
 │   ├── public/
 │   │   └── logo.png      # Brend logotipi
-│   ├── smoke.mjs         # Ishlash tekshiruvi (18 qadam)
+│   ├── smoke.mjs         # Ishlash tekshiruvi (27 tekshiruv qadami)
 │   ├── build-smoke.mjs   # Smoke muhitini tayyorlaydi (esbuild)
 │   ├── smoke-fetch.mjs   # Test uchun vaqtinchalik API server
 │   └── src/
@@ -196,6 +205,8 @@ school-app/
 | **Input** | Barcha maydonlar bo'yicha uzunlik/format tekshiruvi (sana `YYYY-MM-DD`, status whitelist, login regex, chat 2000 belgi, JSON 1 MB) |
 | **Ma'lumotlar** | `server/data/` papkasi `0700`, fayllar `0600`, atomar yozish (tmp + rename), javoblarda faqat oq ro'yxatdagi maydonlar |
 | **Chat/rate** | Sessiyalar soni cheklangan (`MAX_SESSIONS`), chat javobi oxirgi 200 xabar bilan cheklangan |
+| **Davomat** | Faqat o'z sinfi; hamma o'quvchi belgilanmaguncha saqlanmaydi; saqlangandan keyin `ATT_EDIT_WINDOW_MINUTES` (standart 24 soat) ichida tahrirlanadi, keyin 403 |
+| **Chat xonalari** | «Ustozlar va direktor» xonasi — faqat ustoz/direktor; o'quvchi bilan shaxsiy yozishma — faqat o'sha o'quvchining ustozlari |
 
 ### Sozlamalar (`.env`)
 
@@ -209,6 +220,7 @@ Namuna: [`.env.example`](.env.example) (`cp .env.example .env`).
 | `ADMIN_LOGIN` / `ADMIN_PASSWORD` | bo'sh | `SEED_DEMO=0` bo'lganda birinchi ishga tushishda direktor hisobini yaratadi |
 | `STAFF_INVITE_CODE` | bo'sh | Ustoz hisobini ochish uchun taklif kodi (bo'sh bo'lsa yopiq) |
 | `PASSWORD_MIN_LENGTH` | `8` | Yangi parolning minimal uzunligi |
+| `ATT_EDIT_WINDOW_MINUTES` | `1440` | Saqlangan davomatni tahrirlash oynasi (daqiqa; `0` — umuman tahrirlanmaydi) |
 | `SESSION_TTL_MINUTES` | `480` | Sessiya umri (daqiqa) |
 | `MAX_SESSIONS` | `5000` | Bir vaqtda saqlanadigan sessiyalar |
 | `TRUST_PROXY` | `1` | Proxy ortida haqiqiy IP (`0` — to'g'ridan-to'g'ri ochiq bo'lsa) |
@@ -249,7 +261,9 @@ Namuna: [`.env.example`](.env.example) (`cp .env.example .env`).
 | `GET  /api/schedule` | Dars jadvali |
 | `GET  /api/tasks` | Vazifalar |
 | `POST /api/tasks/:id/done` | Vazifani bajarildi deb belgilash |
-| `POST /api/attendance` | Davomatni saqlash |
+| `GET  /api/classes` | Sinflar ro'yxati (1–11, A/B — ochiq ma'lumot) |
+| `POST /api/attendance` | Davomatni saqlash (hammasi belgilanmaguncha 400; 24 soatdan keyin 403) |
+| `GET  /api/attendance` | Kunning davomati + tahrirlash oynasi (`canEdit`, `editableUntil`) |
 | `GET  /api/director/attendance-check` | Davomat nazorati |
 | `POST /api/director/send-sms` | SMS yuborish |
 | `GET  /api/director/sms-log` | Yuborilgan SMS lar |
@@ -260,7 +274,8 @@ Namuna: [`.env.example`](.env.example) (`cp .env.example .env`).
 | `GET  /api/chats/:roomId/messages` | Chat xabarlari (faqat xona a'zolariga) |
 | `POST /api/chats/:roomId/messages` | Chatga xabar yuborish (faqat a'zolarga) |
 | `POST /api/teacher/coins` | O'quvchiga coin berish (o'z sinfi doirasida) |
-| `POST /api/director/budgets` | Ustoz byudjetini belgilash |
+| `POST /api/director/budgets` | Bitta ustoz byudjetini belgilash |
+| `POST /api/director/budgets/all` | **Barcha ustozga birdan** oylik coin belgilash |
 
 ---
 
@@ -271,8 +286,8 @@ npm install                 # ildizda (skriptlar uchun)
 npm --prefix server install
 npm --prefix client install
 
-npm run test:security       # 36 ta xavfsizlik tekshiruvi (haqiqiy API serverga qarshi)
-npm test                    # 18 qadamli interfeys smoke testi (jsdom + haqiqiy API)
+npm run test:security       # 47 ta xavfsizlik tekshiruvi (haqiqiy API serverga qarshi)
+npm test                    # 27 tekshiruvli interfeys smoke testi (jsdom + haqiqiy API)
 npm run test:all            # ikkalasi ketma-ket
 ```
 
@@ -280,11 +295,18 @@ npm run test:all            # ikkalasi ketma-ket
 rollar bo'yicha ruxsatlar, IDOR (begona sinf/vazifa/chat/o'quvchi), brute-force
 himoyasi, CORS, sarlavhalar, input validatsiya, fayl huquqlari (0600/0700).
 
-**`npm test`** (18 qadam): login sahifasi → o'quvchi paneli → reyting → statistika
-→ chat → sozlamalar (3 til + qorong'i rejim + FAQ) → ustoz paneli → vazifalar →
-jadval → davomat → direktor paneli → SMS → chat. Test hafta kuniga bog'liq emas
-(sana qat'iy «dushanba» qilib olinadi) va o'zi vaqtinchalik API serverni ishga
-tushiradi (`client/smoke-fetch.mjs`).
+**`npm test`** (27 tekshiruv): login sahifasi → o'quvchi paneli (ixcham coin
+nishoni, 3×3 panara yo'qligi) → reyting → statistika → chat → sozlamalar
+(3 mavzu rejimi, effektlar tugmasi, 3 til, FAQ) → ustoz paneli → umumiy
+«Ustozlar va direktor» xonasi → vazifalar → jadval → yangi davomat oqimi
+(sabab tanlash, to'liq belgilanmaguncha saqlashning bloklanishi, saqlash,
+24 soatlik tahrir) → direktor paneli → SMS → «Hammaga belgilash» (barcha
+ustozga bir xil coin) → chat. Test hafta kuniga bog'liq emas (sana
+«dushanba»ga suriladi) va o'zi vaqtinchalik API serverni ishga tushiradi
+(`client/smoke-fetch.mjs`).
+
+> Eslatma: davomatning qulflanishi (`ATT_EDIT_WINDOW_MINUTES=0` → 403) va
+> tahrir oynasi server tomondan `test:security` ichida alohida sinaladi.
 
 ---
 

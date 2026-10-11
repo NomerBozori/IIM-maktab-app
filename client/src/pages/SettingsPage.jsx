@@ -5,7 +5,7 @@ import * as UI from '../ui.jsx';
 const FAQ_KEYS = ['fq.q1', 'fq.q2', 'fq.q3', 'fq.q4', 'fq.q5', 'fq.q6', 'fq.q7'];
 
 export default function SettingsPage() {
-  const { t, theme, setTheme, lang, setLang, request, user, updateUser } = useApp();
+  const { t, theme, setTheme, effects, setEffects, lang, setLang, request, user, updateUser } = useApp();
   const [name, setName] = useState(user.displayName);
   const [pw, setPw] = useState('');
   const [pwCurrent, setPwCurrent] = useState('');
@@ -71,7 +71,11 @@ export default function SettingsPage() {
       {user.demo && <div className="alert">{t('stt.demoWarn')}</div>}
 
       <div className="settings-grid">
-        <UI.Card title={t('stt.display')} icon={theme === 'light' ? <UI.Icon.Sun /> : <UI.Icon.Moon />} subtitle="Yorug' / qorong'i rejim">
+        <UI.Card
+          title={t('stt.display')}
+          icon={theme === 'dark' ? <UI.Icon.Moon /> : theme === 'auto' ? <UI.Icon.Eye /> : <UI.Icon.Sun />}
+          subtitle={t('stt.light') + " · " + t('stt.dark') + ' · ' + t('stt.auto')}
+        >
           <div className="theme-toggle">
             <button className={'theme-opt' + (theme === 'light' ? ' active' : '')} onClick={() => setTheme('light')}>
               <span className="to-ic">
@@ -86,6 +90,33 @@ export default function SettingsPage() {
               </span>
               <b>{t('stt.dark')}</b>
               <span className="muted tiny">Dark</span>
+            </button>
+            <button className={'theme-opt' + (theme === 'auto' ? ' active' : '')} onClick={() => setTheme('auto')}>
+              <span className="to-ic">
+                <UI.Icon.Eye />
+              </span>
+              <b>{t('stt.auto')}</b>
+              <span className="muted tiny">{t('stt.autoHint')}</span>
+            </button>
+          </div>
+
+          <div className="effects-row">
+            <span className="effects-ic">
+              <UI.Icon.Sparkles width={18} height={18} />
+            </span>
+            <div className="effects-body">
+              <b>{t('stt.effects')}</b>
+              <div className="muted tiny">{t('stt.effectsDesc')}</div>
+            </div>
+            <button
+              className={'switch' + (effects === 'on' ? ' on' : '')}
+              role="switch"
+              aria-checked={effects === 'on'}
+              aria-label={t('stt.effects')}
+              onClick={() => setEffects(effects === 'on' ? 'off' : 'on')}
+            >
+              <span className="switch-dot" />
+              <span className="switch-txt">{effects === 'on' ? t('stt.effectsOn') : t('stt.effectsOff')}</span>
             </button>
           </div>
         </UI.Card>

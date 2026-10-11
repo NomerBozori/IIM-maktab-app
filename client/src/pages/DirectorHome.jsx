@@ -9,6 +9,8 @@ export default function DirectorHome() {
   const [smsLog, setSmsLog] = useState([]);
   const [overview, setOverview] = useState({ teachers: 0, students: 0 });
   const [draft, setDraft] = useState({});
+  const [allAmount, setAllAmount] = useState(500);
+  const [savingAll, setSavingAll] = useState(false);
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
   const [busyId, setBusyId] = useState('');
@@ -19,6 +21,7 @@ export default function DirectorHome() {
       setBudgets(b.teachers);
       setMonitor(m.teachers);
       setDraft(Object.fromEntries(b.teachers.map((x) => [x.id, x.amount])));
+      if (b.teachers.length) setAllAmount(b.teachers[0].amount);
       const totalAllocated = b.teachers.reduce((a, x) => a + x.amount, 0);
       const totalDistributed = b.teachers.reduce((a, x) => a + x.distributed, 0);
       const all = await request('/rankings');
@@ -53,6 +56,22 @@ export default function DirectorHome() {
       load();
     } catch (ex) {
       setErr(ex.message);
+    }
+  };
+
+  // Hamma ustozga bir xil limitni birdan belgilash
+  const saveAll = async () => {
+    setErr('');
+    setOk('');
+    setSavingAll(true);
+    try {
+      const d = await request('/director/budgets/all', { method: 'POST', body: { amount: allAmount } });
+      setOk(t('dr.allSaved') + ': ' + d.teachers + ' ' + t('c.teacher').toLowerCase() + ' × ' + d.amount + ' ' + t('c.coin'));
+      load();
+    } catch (ex) {
+      setErr(ex.message);
+    } finally {
+      setSavingAll(false);
     }
   };
 
@@ -157,6 +176,25 @@ export default function DirectorHome() {
 
       {/* Ustozlarga coin belgilash */}
       <UI.Card title={t('dr.budgetTitle')} subtitle={t('dr.budgetDesc')} icon={<UI.Icon.Coin />} tone="coin-card">
+        {/* Hamma ustozga birdan */}
+        <div className="budget-all">
+          <UI.Field label={t('dr.budgetAllTitle')}>
+            <input
+              className="input"
+              type="number"
+              min="0"
+              max="100000"
+              value={allAmount}
+              onChange={(e) => setAllAmount(e.target.value)}
+            />
+          </UI.Field>
+          <UI.Button icon={<UI.Icon.Check width={16} height={16} />} loading={savingAll} onClick={saveAll}>
+            {t('dr.setAll')}
+          </UI.Button>
+          <div className="budget-all-hint muted tiny">{t('dr.budgetAllHint')}</div>
+        </div>
+
+        <div className="muted tiny pad-s">{t('dr.perTeacher')}</div>
         <div className="table-wrap">
           <table className="table">
             <thead>

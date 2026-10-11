@@ -176,6 +176,21 @@ const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', '
 const currentMonthLabel = () => MONTHS_UZ[new Date().getMonth()];
 const monthKey = () => new Date().toISOString().slice(0, 7);
 
+// ---------- sinflar: 1–11, A = rus tili, B = o'zbek tili ----------
+const CLASS_NAMES = [];
+for (let g = 1; g <= 11; g++) CLASS_NAMES.push(g + '-A', g + '-B');
+const streamOf = (name) => (/-A$/.test(String(name)) ? 'ru' : 'uz');
+const STREAM_LABEL = { ru: 'Rus tili', uz: "O'zbek tili" };
+function buildClasses(teacherIds) {
+  return CLASS_NAMES.map((name, i) => ({
+    id: 'c_' + (i + 1),
+    name,
+    stream: streamOf(name),
+    streamLabel: STREAM_LABEL[streamOf(name)],
+    teacherId: teacherIds[i % teacherIds.length],
+  }));
+}
+
 function persistAll() {
   writeJson('users.json', db.users);
   writeJson('classes.json', db.classes);
@@ -221,45 +236,43 @@ function buildSeedData() {
     createdAt: now(),
   }));
 
-  const classes = [
-    { id: 'c_1', name: '8-A', teacherId: 't_1' },
-    { id: 'c_2', name: '8-B', teacherId: 't_2' },
-    { id: 'c_3', name: '9-A', teacherId: 't_3' },
-    { id: 'c_4', name: '9-B', teacherId: 't_4' },
-    { id: 'c_5', name: '10-A', teacherId: 't_5' },
-    { id: 'c_6', name: '11-A', teacherId: 't_6' },
-  ];
+  const classes = buildClasses(teachers.map((t) => t.id));
 
   const firstNames = ['Aziz', 'Madina', 'Shahzod', 'Kamola', 'Bekzod', 'Sevara', 'Javohir', 'Dildora', 'Otabek', 'Xurshid', 'Nigina', 'Sardor', 'Gulchehra', 'Farrux', 'Zebo', 'Umid', 'Laylo', 'Jasur', 'Rano', 'Sanjar', 'Malika', 'Bekmurod', 'Shirin', 'Eldor', 'Gavhar', 'Islom', 'Durdona', 'Nodir', 'Mohinur', 'Temur', 'Gulsara', 'Abbos', 'Saodat', 'Muhammad', 'Dilfuza', 'Sherzod', 'Hilola', 'Jahongir', 'Barno', 'Olim'];
   const lastNames = ['Karimov', 'Tursunov', 'Aliyev', 'Rahimov', 'Usmonov', 'Saidov', 'Valiyev', 'Qodirov', "Yo'ldoshev", 'Normatov', 'Ismoilov', 'Xolmatov', 'Ergasov', "To'xtasinov", 'Nazarov', 'Salaev', 'Bektemirov', 'Rasulov', 'Mamatqulov', 'Soliev'];
-  const subjNames = ['Matematika', 'Fizika', 'Ona tili va adabiyot', 'Inglili tili', 'Informatika', 'Tarix', 'Biologiya', 'Kimyo', 'Geografiya'];
+  const subjNames = ['Matematika', 'Fizika', 'Ona tili va adabiyot', 'Ingliz tili', 'Informatika', 'Tarix', 'Biologiya', 'Kimyo', 'Geografiya'];
 
+  // Har sinfga 3 tadan o'quvchi (22 sinf → 66 o'quvchi)
+  const PER_CLASS = 3;
   const students = [];
-  firstNames.forEach((fn, i) => {
-    const cls = classes[i % classes.length];
-    const coins = 40 + Math.floor(Math.random() * 260);
-    const attendance = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 82 + Math.floor(Math.random() * 18) }));
-    const monitoring = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 70 + Math.floor(Math.random() * 30) }));
-    const grades = subjNames.map((sn) => {
-      const list = [];
-      const n = 4 + Math.floor(Math.random() * 6);
-      for (let k = 0; k < n; k++) list.push(3 + Math.floor(Math.random() * 3));
-      return { subject: sn, grades: list };
-    });
-    students.push({
-      id: 's_' + (i + 1),
-      role: 'student',
-      displayName: firstNames[i] + ' ' + lastNames[i % lastNames.length],
-      login: 'oquvchi' + (i + 1),
-      classId: cls.id,
-      className: cls.name,
-      coins,
-      attendance,
-      monitoring,
-      grades,
-      phone: '+998 90 3' + String(10 + (i % 10)).slice(-2) + ' 00 00',
-      createdAt: now(),
-    });
+  classes.forEach((cls, ci) => {
+    for (let k = 0; k < PER_CLASS; k++) {
+      const i = ci * PER_CLASS + k;
+      const coins = 40 + Math.floor(Math.random() * 260);
+      const attendance = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 82 + Math.floor(Math.random() * 18) }));
+      const monitoring = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 70 + Math.floor(Math.random() * 30) }));
+      const grades = subjNames.map((sn) => {
+        const list = [];
+        const n = 4 + Math.floor(Math.random() * 6);
+        for (let g = 0; g < n; g++) list.push(3 + Math.floor(Math.random() * 3));
+        return { subject: sn, grades: list };
+      });
+      students.push({
+        id: 's_' + (i + 1),
+        role: 'student',
+        displayName: firstNames[i % firstNames.length] + ' ' + lastNames[(i + ci) % lastNames.length],
+        login: 'oquvchi' + (i + 1),
+        classId: cls.id,
+        className: cls.name,
+        stream: cls.stream,
+        coins,
+        attendance,
+        monitoring,
+        grades,
+        phone: '+998 90 3' + String(10 + (i % 10)).slice(-2) + ' 00 00',
+        createdAt: now(),
+      });
+    }
   });
 
   const tasks = [
@@ -267,7 +280,7 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_1',
       teacherName: 'Malika Tursunova',
-      className: '8-A',
+      className: '1-A',
       subject: 'Matematika',
       title: 'Tengsizliklar mavzusidan mashqlar',
       description: '1-variant, 45-52 mashqlar.',
@@ -279,7 +292,7 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_1',
       teacherName: 'Malika Tursunova',
-      className: '8-A',
+      className: '1-A',
       subject: 'Matematika',
       title: 'Geometriya: Pifagor teoremasi',
       description: 'Daftarga 3 misol yechib yozing.',
@@ -291,8 +304,8 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_4',
       teacherName: 'Botir Usmonov',
-      className: '9-B',
-      subject: 'Inglili tili',
+      className: '2-B',
+      subject: 'Ingliz tili',
       title: "Unit 3 lug'atini yodlash",
       description: "20 yangi so'z va 5 ta gap.",
       dueDate: '2026-10-10',
@@ -307,6 +320,76 @@ function buildSeedData() {
     subjects: teachers.map((t, i) => ({ id: 'sub_' + (i + 1), name: t.subject, teacherId: t.id })),
     tasks,
   };
+}
+
+// Eski ma'lumotlarni yangi tuzilmaga o'tkazish (idempotent).
+//  * sinflar: 1–11 A/B (22 sinf) + o'quvchilarni sinf nomi bo'yicha qayta bog'lash
+//  * chat: eski "all_teachers" xonasi -> "all_staff" (ustozlar + direktor)
+//  * davomat: eski holatlar (ketdi/kirmadi) -> kelmadi + sabab, classId qo'shiladi
+function migrateData() {
+  const changes = [];
+
+  // --- sinflar ---
+  const teacherIds = db.users.filter((u) => u.role === 'teacher').map((u) => u.id);
+  const hasNewClasses = Array.isArray(db.classes) && CLASS_NAMES.every((n) => db.classes.some((c) => c.name === n));
+  if (!hasNewClasses && teacherIds.length) {
+    const oldByName = new Map((db.classes || []).map((c) => [c.name, c]));
+    const fresh = buildClasses(teacherIds).map((c) => {
+      const prev = oldByName.get(c.name);
+      return prev && prev.teacherId && teacherIds.includes(prev.teacherId) ? { ...c, teacherId: prev.teacherId } : c;
+    });
+    db.classes = fresh;
+    const byName = new Map(fresh.map((c) => [c.name, c]));
+    db.users.forEach((u, i) => {
+      if (u.role !== 'student') return;
+      const cls = byName.get(u.className);
+      if (cls) {
+        u.classId = cls.id;
+        u.stream = cls.stream;
+      } else {
+        const fallback = fresh[i % fresh.length];
+        u.classId = fallback.id;
+        u.className = fallback.name;
+        u.stream = fallback.stream;
+      }
+    });
+    changes.push('sinflar 1–11 (A/B) tuzilmasiga o\'tkazildi: ' + fresh.length + ' sinf');
+  }
+
+  // --- chat xonasi nomi ---
+  let renamed = 0;
+  db.messages.forEach((m) => {
+    if (m.roomId === LEGACY_STAFF_ROOM) {
+      m.roomId = STAFF_ROOM;
+      renamed += 1;
+    }
+  });
+  if (renamed) changes.push(renamed + ' ta chat xabari "all_staff" xonasiga ko\'chirildi');
+
+  // --- davomat: holatlar va classId ---
+  let fixed = 0;
+  db.attendance.forEach((a) => {
+    if (a.status === 'ketdi' || a.status === 'kirmadi') {
+      a.status = 'kelmadi';
+      if (!a.reason) {
+        a.reason = 'boshqa';
+        a.reasonLabel = ATT_REASON_LABEL.boshqa;
+      }
+      fixed += 1;
+    }
+    if (!a.classId) {
+      const st = db.users.find((u) => u.id === a.studentId);
+      if (st && st.classId) a.classId = st.classId;
+      fixed += 1;
+    }
+    if (!a.className) {
+      const st = db.users.find((u) => u.id === a.studentId);
+      if (st) a.className = st.className;
+    }
+  });
+  if (fixed) changes.push(fixed + ' ta davomat yozuvi yangi ko\'rinishga o\'tkazildi');
+
+  return changes;
 }
 
 // Boshlang'ich ma'lumotlar + eski (ochiq matnli) parollarni hash'ga o'tkazish
@@ -381,6 +464,9 @@ async function initData() {
     if (migrated) console.log('Xavfsizlik: ' + migrated + ' ta hisob paroli hash\'landi (scrypt).');
   }
 
+  const migrationChanges = migrateData();
+  migrationChanges.forEach((c) => console.log('Migratsiya: ' + c));
+
   const demoLeft = db.users.filter((u) => u.demo).length;
   if (demoLeft) {
     console.warn((IS_PROD ? 'XAVFSIZLIK: ' : 'DIQQAT: ') + demoLeft + ' ta hisob namuna (demo) parol bilan ishlaydi.');
@@ -388,6 +474,14 @@ async function initData() {
   }
   persistAll();
 }
+
+// ---------- sinflar ro'yxati ----------
+// Ro'yxatdan o'tishda sinf tanlash uchun kerak — shaxsiy ma'lumot yo'q.
+app.get('/api/classes', (req, res) => {
+  res.json({
+    classes: db.classes.map((c) => ({ id: c.id, name: c.name, stream: c.stream || streamOf(c.name) })),
+  });
+});
 
 // ---------- sessiyalar ----------
 const sessions = new Map(); // token -> { userId, role, createdAt, lastSeen, ip }
@@ -456,6 +550,8 @@ function publicUser(u) {
     if (u[k] !== undefined) out[k] = u[k];
   });
   if (u.demo) out.demo = true;
+  // O'quvchi uchun oqim yorlig'i (A — rus tili, B — o'zbek tili)
+  if (u.role === 'student' && u.className) out.streamLabel = STREAM_LABEL[streamOf(u.className)] || '';
   return out;
 }
 
@@ -653,9 +749,14 @@ app.post('/api/register', registerLimiter, async (req, res) => {
 app.get('/api/me', auth, (req, res) => {
   const me = publicUser(req.user);
   if (req.user.role === 'teacher') {
-    me.classes = db.classes.filter((c) => c.teacherId === req.user.id).map((c) => c.name);
+    const mine = db.classes.filter((c) => c.teacherId === req.user.id);
+    me.classes = mine.map((c) => c.name);
+    me.classIds = mine.map((c) => c.id);
     me.budget = budgetForTeacher(req.user.id);
     me.sms = db.smsLog.filter((s) => s.teacherId === req.user.id).slice(-5).reverse();
+  }
+  if (req.user.role === 'student') {
+    me.streamLabel = STREAM_LABEL[streamOf(req.user.className)] || '';
   }
   res.json({ user: me });
 });
@@ -873,13 +974,42 @@ app.post('/api/tasks/:id/done', auth, (req, res) => {
 });
 
 // ---------- davomat ----------
-const ATT_STATUSES = ['keldi', 'ketdi', 'kirmadi'];
+// Holatlar: keldi / kelmadi. "kelmadi" uchun sabab majburiy.
+const ATT_STATUSES = ['keldi', 'kelmadi'];
+const ATT_REASONS = ['kasallik', 'oilaviy', 'boshqa'];
+const ATT_REASON_LABEL = { kasallik: 'Kasallik', oilaviy: 'Oilaviy sabab', boshqa: 'Boshqa' };
+// Davomatni saqlagandan keyin shu vaqt ichida tahrirlash mumkin (standart: 24 soat)
+const ATT_EDIT_WINDOW_MS = Math.max(0, Number(process.env.ATT_EDIT_WINDOW_MINUTES ?? 1440)) * 60 * 1000;
+
+// Bir sinf + sana uchun yozuvlar guruhi qachondan beri tahrirlanmaydi
+function attendanceGroupLock(records) {
+  if (!records.length) return 0; // hali saqlanmagan — tahrir mumkin
+  const oldest = records.reduce((min, r) => {
+    const t = Date.parse(r.createdAt);
+    return Number.isFinite(t) && (min === null || t < min) ? t : min;
+  }, null);
+  if (oldest === null) return 0;
+  return oldest + ATT_EDIT_WINDOW_MS;
+}
 
 app.get('/api/attendance', auth, (req, res) => {
   let list = db.attendance;
   if (req.user.role === 'student') list = list.filter((a) => a.studentId === req.user.id);
   if (req.user.role === 'teacher') list = list.filter((a) => a.teacherId === req.user.id);
-  res.json({ records: list });
+  // Guruh (sinf + sana + ustoz) bo'yicha tahrir holati
+  const groups = new Map();
+  list.forEach((a) => {
+    const key = a.classId + '|' + a.date + '|' + a.teacherId;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  });
+  const locks = new Map();
+  groups.forEach((records, key) => locks.set(key, attendanceGroupLock(records)));
+  const records = list.map((a) => {
+    const until = locks.get(a.classId + '|' + a.date + '|' + a.teacherId) || 0;
+    return { ...a, canEdit: !until || Date.now() < until, editableUntil: until || null };
+  });
+  res.json({ records, editWindowHours: ATT_EDIT_WINDOW_MS / 3600000 });
 });
 
 app.post('/api/attendance', auth, (req, res) => {
@@ -887,37 +1017,92 @@ app.post('/api/attendance', auth, (req, res) => {
   const body = req.body || {};
   const entries = body.entries;
   if (!Array.isArray(entries) || !entries.length) return res.status(400).json({ error: "Davomat ma'lumotlari yo'q" });
-  if (entries.length > 200) return res.status(400).json({ error: "Bir vaqtda 200 tadan ko'p yozuv yuborilmaydi" });
+  if (entries.length > 400) return res.status(400).json({ error: "Bir vaqtda 400 tadan ko'p yozuv yuborilmaydi" });
+
   const d = str(body.date, 10) || new Date().toISOString().slice(0, 10);
   if (!isDate(d)) return res.status(400).json({ error: 'Sana formati YYYY-MM-DD bo\'lishi kerak' });
 
-  // ustoz faqat o'ziga biriktirilgan sinf o'quvchilarining davomatini qiladi
-  const myClassIds = db.classes.filter((c) => c.teacherId === req.user.id).map((c) => c.id);
-  const saved = new Set();
-  entries.forEach((e) => {
+  // Ustoz faqat o'ziga biriktirilgan sinfning davomatini qiladi
+  const classId = str(body.classId, 40);
+  const cls = db.classes.find((c) => c.id === classId && c.teacherId === req.user.id);
+  if (!cls) return res.status(403).json({ error: 'Bu sinf sizga biriktirilmagan' });
+  const classStudents = db.users.filter((u) => u.role === 'student' && u.classId === cls.id);
+  if (!classStudents.length) return res.status(400).json({ error: 'Bu sinfda o\'quvchi yo\'q' });
+
+  // Belgilanganlarni yig'amiz (faqat shu sinf o'quvchilari hisobga olinadi)
+  const marks = new Map();
+  let badEntry = null;
+  for (const e of entries) {
     const studentId = str(e && e.studentId, 40);
+    const student = classStudents.find((u) => u.id === studentId);
+    if (!student) continue; // boshqa sinf o'quvchisi — e'tiborsiz
     const status = str(e && e.status, 20).toLowerCase();
-    if (!studentId || !ATT_STATUSES.includes(status)) return;
-    if (saved.has(studentId)) return;
-    const student = db.users.find((u) => u.id === studentId && u.role === 'student');
-    if (!student || !myClassIds.includes(student.classId)) return;
-    saved.add(studentId);
+    if (!ATT_STATUSES.includes(status)) {
+      badEntry = 'Holat noto\'g\'ri: ' + (student.displayName || studentId);
+      break;
+    }
+    const reason = str(e && e.reason, 20).toLowerCase();
+    if (status === 'kelmadi' && !ATT_REASONS.includes(reason)) {
+      badEntry = 'Kelmaganlik sababi tanlanmagan: ' + student.displayName;
+      break;
+    }
+    marks.set(studentId, {
+      status,
+      reason: status === 'kelmadi' ? reason : '',
+      reasonLabel: status === 'kelmadi' ? ATT_REASON_LABEL[reason] : '',
+      note: status === 'kelmadi' ? str(e && e.note, 200) : '',
+      subject: str(e && e.subject, 60) || req.user.subject || '',
+    });
+  }
+  if (badEntry) return res.status(400).json({ error: badEntry });
+
+  // HAMMA o'quvchi belgilanmaguncha saqlanmaydi
+  if (marks.size !== classStudents.length) {
+    return res.status(400).json({
+      error: 'Davomat saqlanmadi: sinfdagi barcha o\'quvchilarni belgilang (' + marks.size + '/' + classStudents.length + ')',
+      marked: marks.size,
+      total: classStudents.length,
+    });
+  }
+
+  // 24 soat qoidasi: avval saqlangan bo'lsa, faqat tahrir oynasi ichida yangilash mumkin
+  const existing = db.attendance.filter((a) => a.classId === cls.id && a.date === d && a.teacherId === req.user.id);
+  const lockUntil = attendanceGroupLock(existing);
+  if (existing.length && lockUntil && Date.now() >= lockUntil) {
+    return res.status(403).json({
+      error: 'Bu davomat ' + Math.round(ATT_EDIT_WINDOW_MS / 3600000) + ' soat oldin saqlangan — endi o\'zgartirib bo\'lmaydi',
+      locked: true,
+    });
+  }
+
+  const updated = existing.length > 0;
+  if (updated) {
+    // Avvalgisini o'chirib, yangisini yozamiz (tahrir)
+    db.attendance = db.attendance.filter((a) => !(a.classId === cls.id && a.date === d && a.teacherId === req.user.id));
+  }
+
+  marks.forEach((m, studentId) => {
+    const student = classStudents.find((u) => u.id === studentId);
     db.attendance.push({
       id: uid('att'),
       date: d,
+      classId: cls.id,
+      className: cls.name,
       studentId,
       studentName: student.displayName,
-      className: student.className,
       teacherId: req.user.id,
       teacherName: req.user.displayName,
-      subject: str(e.subject, 60) || req.user.subject || '',
-      status,
+      subject: m.subject,
+      status: m.status,
+      reason: m.reason,
+      reasonLabel: m.reasonLabel,
+      note: m.note,
       createdAt: now(),
     });
     recalcAttendance(student);
   });
   persistAll();
-  res.json({ ok: true, saved: saved.size });
+  res.json({ ok: true, saved: marks.size, updated, editWindowHours: ATT_EDIT_WINDOW_MS / 3600000 });
 });
 
 function recalcAttendance(student) {
@@ -926,7 +1111,7 @@ function recalcAttendance(student) {
   const month = monthKey();
   const thisMonth = mine.filter((a) => String(a.date).slice(0, 7) === month);
   if (!thisMonth.length) return;
-  const present = thisMonth.filter((a) => a.status === 'keldi' || a.status === 'ketdi').length;
+  const present = thisMonth.filter((a) => a.status === 'keldi').length;
   const p = Math.round((present / thisMonth.length) * 100);
   const label = currentMonthLabel();
   student.attendance = student.attendance || [];
@@ -1016,6 +1201,29 @@ app.get('/api/director/budgets', auth, (req, res) => {
   res.json({ month, teachers: rows });
 });
 
+// Hamma ustozga bir xil oylik limitni birdan belgilash
+app.post('/api/director/budgets/all', auth, (req, res) => {
+  if (!isDirector(req)) return res.status(403).json({ error: 'Faqat direktor uchun' });
+  const body = req.body || {};
+  const amount = Math.floor(num(body.amount, NaN));
+  if (!Number.isFinite(amount) || amount < 0 || amount > 100000) {
+    return res.status(400).json({ error: "Miqdor 0 dan 100000 gacha butun son bo'lishi kerak" });
+  }
+  const month = monthKey();
+  const teachers = db.users.filter((u) => u.role === 'teacher');
+  teachers.forEach((t) => {
+    let b = db.coinBudgets.find((x) => x.teacherId === t.id && x.month === month);
+    if (!b) {
+      b = { id: uid('b'), teacherId: t.id, month, amount, distributed: 0 };
+      db.coinBudgets.push(b);
+    } else {
+      b.amount = amount;
+    }
+  });
+  persistAll();
+  res.json({ ok: true, month, amount, teachers: teachers.length });
+});
+
 app.post('/api/director/budgets', auth, (req, res) => {
   if (!isDirector(req)) return res.status(403).json({ error: 'Faqat direktor uchun' });
   const body = req.body || {};
@@ -1040,16 +1248,21 @@ app.post('/api/director/budgets', auth, (req, res) => {
 
 // ---------- chat ----------
 const MAX_MESSAGES_PER_ROOM = 200;
+// Ustozlar va direktor uchun umumiy xona (hammasi yoza oladi)
+const STAFF_ROOM = 'all_staff';
+const LEGACY_STAFF_ROOM = 'all_teachers';
 function dmRoom(a, b) {
   return 'dm_' + [a, b].sort().join('_');
 }
+const isStaff = (user) => user && (user.role === 'teacher' || user.role === 'director');
 
 // Chat xonasiga faqat a'zolar kira oladi (begona sinf/xabar o'qib bo'lmaydi)
 function roomAccess(user, roomId) {
   if (typeof roomId !== 'string' || roomId.length < 3 || roomId.length > 80) return false;
   if (!/^[A-Za-z0-9_.:-]+$/.test(roomId)) return false;
 
-  if (roomId === 'all_teachers') return user.role === 'director' || user.role === 'teacher';
+  // Umumiy xona: ustozlar ham, direktor ham yozadi
+  if (roomId === STAFF_ROOM || roomId === LEGACY_STAFF_ROOM) return isStaff(user);
 
   if (roomId.startsWith('class_')) {
     const classId = roomId.slice('class_'.length);
@@ -1065,7 +1278,11 @@ function roomAccess(user, roomId) {
     const other = db.users.find((u) => u.id !== user.id && dmRoom(user.id, u.id) === roomId);
     if (!other) return false;
     if (user.role === 'student') return other.role === 'teacher';
-    if (user.role === 'teacher') return other.role === 'student';
+    if (user.role === 'teacher') {
+      // Ustoz faqat o'ziga biriktirilgan sinf o'quvchilari bilan yozishadi
+      if (other.role !== 'student') return false;
+      return db.classes.some((c) => c.id === other.classId && c.teacherId === user.id);
+    }
     if (user.role === 'director') return other.role === 'teacher';
     return false;
   }
@@ -1104,17 +1321,29 @@ app.get('/api/chats', auth, (req, res) => {
         lastMessage: msgs.length ? msgs[msgs.length - 1] : null,
       };
     });
-    chats = [...classChats, ...dms];
-  } else if (me.role === 'director') {
-    const teachers = db.users.filter((u) => u.role === 'teacher');
-    chats = [{
-      roomId: 'all_teachers',
-      type: 'group',
-      title: 'Barcha ustozlar',
-      subtitle: teachers.length + ' ustoz',
-      memberCount: teachers.length,
+    // Umumiy xona: barcha ustozlar + direktor
+    const staffMsgs = db.messages.filter((m) => m.roomId === STAFF_ROOM);
+    const staffCount = db.users.filter((u) => u.role === 'teacher' || u.role === 'director').length;
+    const staffChat = {
+      roomId: STAFF_ROOM,
+      type: 'staff',
+      title: 'Ustozlar va direktor',
+      subtitle: 'Umumiy chat — hamma ustoz va direktor yoza oladi',
+      memberCount: staffCount,
       avatarColor: '#6B4E9B',
-      lastMessage: (() => { const m = db.messages.filter((x) => x.roomId === 'all_teachers'); return m.length ? m[m.length - 1] : null; })(),
+      lastMessage: staffMsgs.length ? staffMsgs[staffMsgs.length - 1] : null,
+    };
+    chats = [staffChat, ...classChats, ...dms];
+  } else if (me.role === 'director') {
+    const staff = db.users.filter((u) => u.role === 'teacher' || u.role === 'director');
+    chats = [{
+      roomId: STAFF_ROOM,
+      type: 'staff',
+      title: 'Ustozlar va direktor',
+      subtitle: db.users.filter((u) => u.role === 'teacher').length + ' ustoz + direktor',
+      memberCount: staff.length,
+      avatarColor: '#6B4E9B',
+      lastMessage: (() => { const m = db.messages.filter((x) => x.roomId === STAFF_ROOM); return m.length ? m[m.length - 1] : null; })(),
     }];
   } else {
     const teachers = db.users.filter((u) => u.role === 'teacher');
