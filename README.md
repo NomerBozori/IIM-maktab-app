@@ -84,8 +84,12 @@ Barcha parollar: **`1234`**
 | `ustoz1` … `ustoz9` | 👨‍🏫 Ustoz | Byudjet, vazifa, jadval, davomat |
 | `oquvchi1` … `oquvchi66` | 🎒 O'quvchi | Coinlar, baholar, reyting, chat |
 
-Seed ma'lumotlar: 9 ustoz, **22 sinf (1–11, har biri A va B)** va 66 o'quvchi.
-Sinf belgisi: **A — rus tili**, **B — o'zbek tili** (masalan `2-A — Rus tili`).
+Seed ma'lumotlar: 9 ustoz, **11 sinf (1, 2, 3, … 11)** va 66 o'quvchi (har sinfda
+6 ta: 3 tasi A guruhda, 3 tasi B guruhda).
+
+**Sinf nomi faqat raqam** — `1`, `2`, … `11` (harf sinf nomiga qo'shilmaydi).
+Guruh esa o'quvchining o'zi tanlaydigan til yo'nalishi:
+**A — rus tili**, **B — o'zbek tili** (masalan o'quvchi: `8-sinf · A — Rus tili`).
 
 > ⚠️ Bu akkauntlar faqat namoyish uchun. Ilova demo hisoblar uchun
 > «namuna parol» ogohlantirishini ko'rsatadi. Ishlab chiqarishda
@@ -107,6 +111,7 @@ Sinf belgisi: **A — rus tili**, **B — o'zbek tili** (masalan `2-A — Rus ti
 - **Sozlamalar** — yorug'i / qorong'i / **avtomatik** rejim, **effektlar**
   (animatsiya) tugmasi, uz/ru/en til, FAQ, parol, ism
 - **Tengdoshlar profili** — faqat statistika ko'rinadi
+- **Sinf va guruh** — sarlavhada `8-sinf · A — Rus tili` ko'rinishida
 
 ### 👨‍🏫 Ustoz
 - **Oylik coin byudjeti** — belgilangan miqdorni o'quvchilarga taqsimlash
@@ -160,7 +165,7 @@ school-app/
 │   ├── vite.config.js    # /api → http://localhost:4000
 │   ├── public/
 │   │   └── logo.png      # Brend logotipi
-│   ├── smoke.mjs         # Ishlash tekshiruvi (27 tekshiruv qadami)
+│   ├── smoke.mjs         # Ishlash tekshiruvi (28 tekshiruv qadami)
 │   ├── build-smoke.mjs   # Smoke muhitini tayyorlaydi (esbuild)
 │   ├── smoke-fetch.mjs   # Test uchun vaqtinchalik API server
 │   └── src/
@@ -261,7 +266,7 @@ Namuna: [`.env.example`](.env.example) (`cp .env.example .env`).
 | `GET  /api/schedule` | Dars jadvali |
 | `GET  /api/tasks` | Vazifalar |
 | `POST /api/tasks/:id/done` | Vazifani bajarildi deb belgilash |
-| `GET  /api/classes` | Sinflar ro'yxati (1–11, A/B — ochiq ma'lumot) |
+| `GET  /api/classes` | Sinflar ro'yxati (1…11) va guruhlar (A — rus, B — o'zbek) — ochiq ma'lumot |
 | `POST /api/attendance` | Davomatni saqlash (hammasi belgilanmaguncha 400; 24 soatdan keyin 403) |
 | `GET  /api/attendance` | Kunning davomati + tahrirlash oynasi (`canEdit`, `editableUntil`) |
 | `GET  /api/director/attendance-check` | Davomat nazorati |
@@ -287,7 +292,7 @@ npm --prefix server install
 npm --prefix client install
 
 npm run test:security       # 47 ta xavfsizlik tekshiruvi (haqiqiy API serverga qarshi)
-npm test                    # 27 tekshiruvli interfeys smoke testi (jsdom + haqiqiy API)
+npm test                    # 28 tekshiruvli interfeys smoke testi (jsdom + haqiqiy API)
 npm run test:all            # ikkalasi ketma-ket
 ```
 
@@ -295,8 +300,9 @@ npm run test:all            # ikkalasi ketma-ket
 rollar bo'yicha ruxsatlar, IDOR (begona sinf/vazifa/chat/o'quvchi), brute-force
 himoyasi, CORS, sarlavhalar, input validatsiya, fayl huquqlari (0600/0700).
 
-**`npm test`** (27 tekshiruv): login sahifasi → o'quvchi paneli (ixcham coin
-nishoni, 3×3 panara yo'qligi) → reyting → statistika → chat → sozlamalar
+**`npm test`** (28 tekshiruv): login sahifasi → ro'yxatdan o'tishdagi sinf tanlovi
+(sinf nomida harf yo'qligi: faqat `1…11` va A/B guruh) → o'quvchi paneli (ixcham
+coin nishoni, 3×3 panara yo'qligi, `8-sinf · A — Rus tili` ko'rinishi) → reyting → statistika → chat → sozlamalar
 (3 mavzu rejimi, effektlar tugmasi, 3 til, FAQ) → ustoz paneli → umumiy
 «Ustozlar va direktor» xonasi → vazifalar → jadval → yangi davomat oqimi
 (sabab tanlash, to'liq belgilanmaguncha saqlashning bloklanishi, saqlash,

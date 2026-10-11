@@ -94,6 +94,12 @@ const T = {
     en: 'Demo accounts — remove them in production',
   },
   'lg.pickSinf': { uz: 'Sinfingizni tanlang', ru: 'Выберите класс', en: 'Choose your class' },
+  'lg.pickGroup': { uz: 'Guruh (til yo\'nalishi)', ru: 'Группа (языковое направление)', en: 'Group (language stream)' },
+  'lg.groupHint': {
+    uz: 'A — rus tili guruhida o\'qiydiganlar, B — o\'zbek tili guruhida o\'qiydiganlar',
+    ru: 'A — учащиеся русскоязычной группы, B — узбекоязычной группы',
+    en: 'A — students in the Russian-language group, B — the Uzbek-language group',
+  },
   'lg.streamRu': { uz: 'A — rus tili', ru: 'A — русский язык', en: 'A — Russian' },
   'lg.streamUz': { uz: 'B — o\'zbek tili', ru: 'B — узбекский язык', en: 'B — Uzbek' },
   'lg.studentDesc': { uz: "Coinlar, baholar, reyting, chat", ru: 'Монеты, оценки, рейтинг, чат', en: 'Coins, grades, ranking, chat' },

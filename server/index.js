@@ -176,17 +176,29 @@ const MONTHS_UZ = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', '
 const currentMonthLabel = () => MONTHS_UZ[new Date().getMonth()];
 const monthKey = () => new Date().toISOString().slice(0, 7);
 
-// ---------- sinflar: 1–11, A = rus tili, B = o'zbek tili ----------
+// ---------- sinflar: 1, 2, 3, … 11 (har sinfda A — rus tili, B — o'zbek tili guruhi) ----------
+// Diqqat: sinf nomi faqat raqam («5»), harf nomga qo'shilmaydi.
+// Guruh (A = rus tili, B = o'zbek tili) — o'quvchining o'z belgisi.
 const CLASS_NAMES = [];
-for (let g = 1; g <= 11; g++) CLASS_NAMES.push(g + '-A', g + '-B');
-const streamOf = (name) => (/-A$/.test(String(name)) ? 'ru' : 'uz');
-const STREAM_LABEL = { ru: 'Rus tili', uz: "O'zbek tili" };
+for (let g = 1; g <= 11; g++) CLASS_NAMES.push(String(g));
+const GROUP_CODES = ['ru', 'uz'];
+const GROUP_CODE = { ru: 'A', uz: 'B' };
+const GROUP_LABEL = { ru: 'Rus tili', uz: "O'zbek tili" };
+const streamLabel = (g) => (GROUP_CODE[g] ? GROUP_CODE[g] + ' — ' + GROUP_LABEL[g] : '');
+// Eski nomdan sinf raqamini ajratib olish: '8-A' -> '8'
+const gradeOfName = (name) => String(name == null ? '' : name).replace(/[^0-9]/g, '') || '';
+// Eski nomdan guruhni aniqlash: '8-A' -> ru, '8-B' -> uz
+const groupOfLegacyName = (name) => (/-B$/i.test(String(name == null ? '' : name)) ? 'uz' : 'ru');
+// Jadval fayllari faqat ma'lum rollar uchun (fayl nomiga tashqi qiymat tushmaydi)
+const SCHEDULE_ROLES = ['student', 'teacher', 'director'];
+const SCHEDULE_FILES = SCHEDULE_ROLES.map((r) => 'schedule-' + r + '.json');
+
 function buildClasses(teacherIds) {
   return CLASS_NAMES.map((name, i) => ({
     id: 'c_' + (i + 1),
-    name,
-    stream: streamOf(name),
-    streamLabel: STREAM_LABEL[streamOf(name)],
+    name,               // «1», «2», … «11»
+    grade: i + 1,
+    groups: GROUP_CODES.slice(),
     teacherId: teacherIds[i % teacherIds.length],
   }));
 }
@@ -242,12 +254,13 @@ function buildSeedData() {
   const lastNames = ['Karimov', 'Tursunov', 'Aliyev', 'Rahimov', 'Usmonov', 'Saidov', 'Valiyev', 'Qodirov', "Yo'ldoshev", 'Normatov', 'Ismoilov', 'Xolmatov', 'Ergasov', "To'xtasinov", 'Nazarov', 'Salaev', 'Bektemirov', 'Rasulov', 'Mamatqulov', 'Soliev'];
   const subjNames = ['Matematika', 'Fizika', 'Ona tili va adabiyot', 'Ingliz tili', 'Informatika', 'Tarix', 'Biologiya', 'Kimyo', 'Geografiya'];
 
-  // Har sinfga 3 tadan o'quvchi (22 sinf → 66 o'quvchi)
-  const PER_CLASS = 3;
+  // Har sinfga 6 tadan o'quvchi (11 sinf → 66 o'quvchi): 3 tasi A (rus tili), 3 tasi B (o'zbek tili)
+  const PER_CLASS = 6;
   const students = [];
   classes.forEach((cls, ci) => {
     for (let k = 0; k < PER_CLASS; k++) {
       const i = ci * PER_CLASS + k;
+      const stream = k < PER_CLASS / 2 ? 'ru' : 'uz';
       const coins = 40 + Math.floor(Math.random() * 260);
       const attendance = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 82 + Math.floor(Math.random() * 18) }));
       const monitoring = MONTHS_UZ.slice(0, 3).map((label) => ({ label, percent: 70 + Math.floor(Math.random() * 30) }));
@@ -264,7 +277,7 @@ function buildSeedData() {
         login: 'oquvchi' + (i + 1),
         classId: cls.id,
         className: cls.name,
-        stream: cls.stream,
+        stream,
         coins,
         attendance,
         monitoring,
@@ -280,7 +293,7 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_1',
       teacherName: 'Malika Tursunova',
-      className: '1-A',
+      className: '1',
       subject: 'Matematika',
       title: 'Tengsizliklar mavzusidan mashqlar',
       description: '1-variant, 45-52 mashqlar.',
@@ -292,7 +305,7 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_1',
       teacherName: 'Malika Tursunova',
-      className: '1-A',
+      className: '1',
       subject: 'Matematika',
       title: 'Geometriya: Pifagor teoremasi',
       description: 'Daftarga 3 misol yechib yozing.',
@@ -304,7 +317,7 @@ function buildSeedData() {
       id: uid('task'),
       teacherId: 't_4',
       teacherName: 'Botir Usmonov',
-      className: '2-B',
+      className: '2',
       subject: 'Ingliz tili',
       title: "Unit 3 lug'atini yodlash",
       description: "20 yangi so'z va 5 ta gap.",
@@ -323,7 +336,7 @@ function buildSeedData() {
 }
 
 // Eski ma'lumotlarni yangi tuzilmaga o'tkazish (idempotent).
-//  * sinflar: 1–11 A/B (22 sinf) + o'quvchilarni sinf nomi bo'yicha qayta bog'lash
+//  * sinflar: 1–11 (sinf nomi faqat raqam), o'quvchilarga A/B guruhi (rus/o'zbek tili)
 //  * chat: eski "all_teachers" xonasi -> "all_staff" (ustozlar + direktor)
 //  * davomat: eski holatlar (ketdi/kirmadi) -> kelmadi + sabab, classId qo'shiladi
 function migrateData() {
@@ -331,30 +344,99 @@ function migrateData() {
 
   // --- sinflar ---
   const teacherIds = db.users.filter((u) => u.role === 'teacher').map((u) => u.id);
-  const hasNewClasses = Array.isArray(db.classes) && CLASS_NAMES.every((n) => db.classes.some((c) => c.name === n));
+  const legacyClasses = Array.isArray(db.classes) ? db.classes : [];
+  const hasNewClasses = legacyClasses.length === CLASS_NAMES.length
+    && CLASS_NAMES.every((n) => legacyClasses.some((c) => c.name === n));
   if (!hasNewClasses && teacherIds.length) {
-    const oldByName = new Map((db.classes || []).map((c) => [c.name, c]));
+    // Eski tuzilma: '1-A', '1-B', … (yoki boshqa nomlar). Yangi: '1'…'11'.
+    const byGrade = new Map();
+    legacyClasses.forEach((c) => {
+      const g = gradeOfName(c.name);
+      if (g && !byGrade.has(g)) byGrade.set(g, c);
+    });
     const fresh = buildClasses(teacherIds).map((c) => {
-      const prev = oldByName.get(c.name);
+      const prev = byGrade.get(c.name);
       return prev && prev.teacherId && teacherIds.includes(prev.teacherId) ? { ...c, teacherId: prev.teacherId } : c;
     });
-    db.classes = fresh;
+    // Eski sinf id -> yangi sinf id (sinf raqami bo'yicha)
+    const idMap = new Map();
+    legacyClasses.forEach((old) => {
+      const target = fresh.find((c) => c.name === gradeOfName(old.name));
+      if (target) idMap.set(old.id, target.id);
+    });
     const byName = new Map(fresh.map((c) => [c.name, c]));
     db.users.forEach((u, i) => {
       if (u.role !== 'student') return;
-      const cls = byName.get(u.className);
+      const legacyName = u.className;
+      const cls = byName.get(gradeOfName(legacyName));
       if (cls) {
         u.classId = cls.id;
-        u.stream = cls.stream;
+        u.className = cls.name;
       } else {
         const fallback = fresh[i % fresh.length];
         u.classId = fallback.id;
         u.className = fallback.name;
-        u.stream = fallback.stream;
+      }
+      // Guruh: A — rus tili, B — o'zbek tili
+      if (!GROUP_CODE[u.stream]) u.stream = legacyName ? groupOfLegacyName(legacyName) : 'uz';
+    });
+    db.classes = fresh;
+
+    // Davomat yozuvlaridagi eski sinf ma'lumotlarini yangilash
+    db.attendance.forEach((a) => {
+      if (!a) return;
+      const mapped = a.classId ? idMap.get(a.classId) : null;
+      if (mapped) a.classId = mapped;
+      const g = gradeOfName(a.className);
+      if (g) a.className = g;
+    });
+
+    // Vazifalar sinf nomi
+    db.tasks.forEach((t) => {
+      const g = gradeOfName(t.className);
+      if (g) t.className = g;
+    });
+
+    // Chat xonalari: "class_<eski id>" -> "class_<yangi id>"
+    if (idMap.size) {
+      db.messages.forEach((m) => {
+        if (!m || typeof m.roomId !== 'string' || !m.roomId.startsWith('class_')) return;
+        const target = idMap.get(m.roomId.slice(6));
+        if (target) m.roomId = 'class_' + target;
+      });
+    }
+
+    changes.push('sinflar 1–11 (11 sinf) tuzilmasiga o\'tkazildi: ' + fresh.length + ' sinf');
+    changes.push('o\'quvchilarga A/B guruhi (rus/o\'zbek tili) biriktirildi');
+  } else {
+    // Sinf tuzilmasi to'g'ri, lekin guruh belgisi yo'q bo'lsa — to'ldiramiz
+    let filled = 0;
+    db.users.forEach((u) => {
+      if (u.role === 'student' && !GROUP_CODE[u.stream]) {
+        u.stream = groupOfLegacyName(u.className);
+        filled += 1;
       }
     });
-    changes.push('sinflar 1–11 (A/B) tuzilmasiga o\'tkazildi: ' + fresh.length + ' sinf');
+    if (filled) changes.push(filled + ' ta o\'quvchiga guruh (A/B) biriktirildi');
   }
+
+  // Jadval fayllaridagi eski sinf nomlarini yangilash
+  SCHEDULE_FILES.forEach((file) => {
+    const rows = readJson(file, []);
+    if (!Array.isArray(rows) || !rows.length) return;
+    let touched = 0;
+    rows.forEach((r) => {
+      const g = gradeOfName(r.className);
+      if (g && g !== r.className) {
+        r.className = g;
+        touched += 1;
+      }
+    });
+    if (touched) {
+      writeJson(file, rows);
+      changes.push(file + ': ' + touched + ' qator yangi sinf nomiga o\'tkazildi');
+    }
+  });
 
   // --- chat xonasi nomi ---
   let renamed = 0;
@@ -479,7 +561,9 @@ async function initData() {
 // Ro'yxatdan o'tishda sinf tanlash uchun kerak — shaxsiy ma'lumot yo'q.
 app.get('/api/classes', (req, res) => {
   res.json({
-    classes: db.classes.map((c) => ({ id: c.id, name: c.name, stream: c.stream || streamOf(c.name) })),
+    classes: db.classes.map((c) => ({ id: c.id, name: c.name })),
+    // Guruhlar: A — rus tili, B — o'zbek tili
+    groups: GROUP_CODES.map((g) => ({ value: g, code: GROUP_CODE[g] })),
   });
 });
 
@@ -551,7 +635,7 @@ function publicUser(u) {
   });
   if (u.demo) out.demo = true;
   // O'quvchi uchun oqim yorlig'i (A — rus tili, B — o'zbek tili)
-  if (u.role === 'student' && u.className) out.streamLabel = STREAM_LABEL[streamOf(u.className)] || '';
+  if (u.role === 'student') out.streamLabel = streamLabel(u.stream);
   return out;
 }
 
@@ -713,13 +797,17 @@ app.post('/api/register', registerLimiter, async (req, res) => {
 
   let classId = null;
   let className = null;
+  let stream = '';
   let subject = '';
   if (role === 'student') {
     const wanted = str(body.className, 20);
-    const cls = db.classes.find((c) => c.name === wanted) || null;
+    // Sinf nomi faqat raqam («1»…«11»); eski «5-A» ko'rinishi ham qabul qilinadi
+    const cls = db.classes.find((c) => c.name === wanted) || db.classes.find((c) => c.name === gradeOfName(wanted)) || null;
     if (!cls) return res.status(400).json({ error: 'Sinf topilmadi. Mavjud sinflardan birini tanlang' });
     classId = cls.id;
     className = cls.name;
+    const wantedGroup = str(body.stream, 10).toLowerCase();
+    stream = GROUP_CODE[wantedGroup] ? wantedGroup : groupOfLegacyName(wanted);
   } else {
     subject = str(body.subject, 60);
   }
@@ -732,6 +820,7 @@ app.post('/api/register', registerLimiter, async (req, res) => {
     passwordHash: await hashPassword(password),
     classId,
     className,
+    stream,
     subject,
     phone: '',
     coins: 0,
@@ -756,7 +845,7 @@ app.get('/api/me', auth, (req, res) => {
     me.sms = db.smsLog.filter((s) => s.teacherId === req.user.id).slice(-5).reverse();
   }
   if (req.user.role === 'student') {
-    me.streamLabel = STREAM_LABEL[streamOf(req.user.className)] || '';
+    me.streamLabel = streamLabel(req.user.stream);
   }
   res.json({ user: me });
 });
@@ -899,8 +988,6 @@ function seedSchedule() {
   return rows;
 }
 
-// Jadval fayli faqat ma'lum rollar uchun (fayl nomiga tashqi qiymat tushmaydi)
-const SCHEDULE_ROLES = ['student', 'teacher', 'director'];
 function scheduleFor(role) {
   if (!SCHEDULE_ROLES.includes(role)) return [];
   const file = 'schedule-' + role + '.json';

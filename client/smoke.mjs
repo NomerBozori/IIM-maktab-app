@@ -211,6 +211,34 @@ await step(
 );
 
 // ============================================================
+//  1b. Ro'yxatdan o'tish: sinf faqat raqam (1…11) + A/B guruh
+// ============================================================
+await doStep("ro'yxatdan o'tish formasini ochish", () => {
+  const link = [...document.querySelectorAll('.login-switch .link, .login-switch button')].find((b) => /o'?tish|Ro'yxatdan/i.test(b.textContent));
+  if (!link) throw new Error("ro'yxatdan o'tish havolasi topilmadi");
+  link.click();
+});
+
+await checkStep('sinf va guruh tanlovi (sinf nomida harf yo\'q, A/B guruh bor)', () => {
+  const selects = [...document.querySelectorAll('select')];
+  if (selects.length < 2) throw new Error('sinf/guruh tanlovlari topilmadi: ' + selects.length);
+  const texts = selects.map((sel) => [...sel.options].map((o) => o.textContent.trim()).join(' | '));
+  const classSel = texts.find((t) => /Sinf\s*\d/i.test(t));
+  if (!classSel) throw new Error('sinf tanlovi topilmadi. Variantlar: ' + texts.join(' || ').slice(0, 200));
+  const names = classSel.split(' | ').map((x) => x.replace(/^Sinf\s*/i, '').trim());
+  if (names.some((n) => /[A-Za-z]/.test(n))) throw new Error('sinf nomida harf bor: ' + names.join(','));
+  const nums = names.map(Number).sort((a, b) => a - b).join(',');
+  if (nums !== '1,2,3,4,5,6,7,8,9,10,11') throw new Error('sinflar raqamlari: ' + nums);
+  const groupSel = texts.find((t) => /A —|B —/.test(t));
+  if (!groupSel) throw new Error('A/B guruh tanlovi topilmadi. Variantlar: ' + texts.join(' || ').slice(0, 200));
+}, 8000);
+
+await doStep('ro\'yxatdan o\'tish formasini yopish', () => {
+  const link = [...document.querySelectorAll('.login-switch .link, .login-switch button')].find((b) => /bormi|Akkaunt/i.test(b.textContent));
+  if (link) link.click();
+});
+
+// ============================================================
 //  2. O'quvchi demo akkauntga kirish
 // ============================================================
 await step(
@@ -231,6 +259,12 @@ await step(
     need('.lesson-list', 'dars jadvali');
     need('.task-list', 'vazifalar');
     need('.sidebar .brand-mark img', 'sidebar logotipi');
+    // Sinf: faqat raqam + guruh (A — rus tili / B — o'zbek tili)
+    const txt = document.querySelector('.hello p') ? document.querySelector('.hello p').textContent : document.body.textContent;
+    const m = txt.match(/(\d{1,2})\s*-?\s*sinf/);
+    if (!m) throw new Error('sarlavhada sinf ko\'rinmadi: ' + txt.slice(0, 80));
+    if (m[1] !== '1') throw new Error('birinchi demo o\'quvchi sinfi «1» bo\'lishi kerak, keldi: ' + m[1]);
+    if (!/[AB] — (Rus|O\'zbek) tili/.test(txt)) throw new Error('guruh yorlig\'i (A/B) ko\'rinmadi: ' + txt.slice(0, 120));
   },
   8000
 );

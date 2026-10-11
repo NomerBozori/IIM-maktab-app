@@ -14,7 +14,7 @@ export default function LoginPage() {
   const { login, register, t } = useApp();
   const [role, setRole] = useState('student');
   const [mode, setMode] = useState('login'); // login | register
-  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '8-A', subject: '', inviteCode: '' });
+  const [form, setForm] = useState({ login: '', password: '', displayName: '', className: '', stream: 'ru', subject: '', inviteCode: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [classes, setClasses] = useState([]);
@@ -60,6 +60,7 @@ export default function LoginPage() {
           displayName: form.displayName,
           role,
           className: form.className,
+          stream: form.stream,
           subject: form.subject,
           inviteCode: form.inviteCode,
         });
@@ -155,16 +156,25 @@ export default function LoginPage() {
                 <input className="input" value={form.displayName} onChange={set('displayName')} placeholder="Aziz Karimov" required />
               </UI.Field>
               {role === 'student' && (
-                <UI.Field label={t('lg.pickSinf')} hint={t('lg.streamRu') + ' · ' + t('lg.streamUz')}>
-                  <UI.Select
-                    value={form.className}
-                    onChange={set('className')}
-                    options={classes.map((c) => ({
-                      value: c.name,
-                      label: c.name + ' — ' + (c.stream === 'ru' ? t('lg.streamRu') : t('lg.streamUz')),
-                    }))}
-                  />
-                </UI.Field>
+                <>
+                  <UI.Field label={t('lg.pickSinf')}>
+                    <UI.Select
+                      value={form.className}
+                      onChange={set('className')}
+                      options={classes.map((c) => ({ value: c.name, label: t('c.class') + ' ' + c.name }))}
+                    />
+                  </UI.Field>
+                  <UI.Field label={t('lg.pickGroup')} hint={t('lg.groupHint')}>
+                    <UI.Select
+                      value={form.stream}
+                      onChange={set('stream')}
+                      options={[
+                        { value: 'ru', label: t('lg.streamRu') },
+                        { value: 'uz', label: t('lg.streamUz') },
+                      ]}
+                    />
+                  </UI.Field>
+                </>
               )}
               {role === 'teacher' && (
                 <UI.Field label={t('c.subject')}>

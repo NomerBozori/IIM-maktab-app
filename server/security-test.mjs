@@ -176,21 +176,21 @@ await check('juda katta so\'rov → 413', async () => {
   eq(r.status, 413, 'holat');
 });
 
-// ---------- 2. Sinflar tuzilmasi (1–11, A/B) ----------
-await check('sinflar: 1–11 gacha, A — rus tili, B — o\'zbek tili (22 sinf)', async () => {
+// ---------- 2. Sinflar tuzilmasi (faqat raqam: 1, 2, … 11) ----------
+await check('sinflar: 1–11 (sinf nomi faqat raqam, harf qo\'shilmaydi)', async () => {
   const r = await req('/api/classes');
   eq(r.status, 200, 'holat');
   const list = r.json.classes || [];
-  eq(list.length, 22, 'sinflar soni');
-  eq(list[0].name, '1-A', 'birinchi sinf');
-  eq(list[0].stream, 'ru', '1-A oqimi');
-  eq(list[1].name, '1-B', 'ikkinchi sinf');
-  eq(list[1].stream, 'uz', '1-B oqimi');
-  eq(list[list.length - 1].name, '11-B', 'oxirgi sinf');
-  assert(list.every((c) => /^\d{1,2}-[AB]$/.test(c.name)), 'sinf nomi formati buzilgan');
-  assert(list.every((c) => (c.name.endsWith('-A') ? c.stream === 'ru' : c.stream === 'uz')), 'oqim nom bilan mos emas');
-  const grades = [...new Set(list.map((c) => Number(c.name.split('-')[0])))].sort((a, b) => a - b);
+  eq(list.length, 11, 'sinflar soni');
+  eq(list[0].name, '1', 'birinchi sinf');
+  eq(list[list.length - 1].name, '11', 'oxirgi sinf');
+  assert(list.every((c) => /^\d{1,2}$/.test(c.name)), 'sinf nomi formati buzilgan (faqat raqam bo\'lishi kerak)');
+  assert(!list.some((c) => /[A-Za-z]/.test(c.name)), 'sinf nomida harf bor');
+  const grades = list.map((c) => Number(c.name)).sort((a, b) => a - b);
   eq(grades.join(','), '1,2,3,4,5,6,7,8,9,10,11', 'sinf raqamlari');
+  // Guruhlar: A — rus tili, B — o'zbek tili
+  const groups = (r.json.groups || []).map((g) => g.value).join(',');
+  eq(groups, 'ru,uz', 'guruhlar');
 });
 
 // ---------- 3. Autentifikatsiya ----------
@@ -203,8 +203,8 @@ await check('demo o\'quvchi kira oladi (parol hash bilan)', async () => {
   student = r.json.user;
   assert(!('password' in student) && !('passwordHash' in student), 'javobda parol maydoni bor');
   assert(studentToken.length >= 40, 'token juda qisqa: ' + studentToken.length);
-  eq(student.className, '1-A', 'birinchi o\'quvchi sinfi');
-  eq(student.streamLabel, 'Rus tili', 'oqim yorlig\'i');
+  eq(student.className, '1', 'birinchi o\'quvchi sinfi');
+  eq(student.streamLabel, 'A — Rus tili', 'guruh yorlig\'i');
 });
 
 await check('token formati va tasodifiyligi', async () => {
@@ -273,7 +273,7 @@ await check('qisqa parol va noto\'g\'ri sinf rad etiladi', async () => {
   const short = await req('/api/register', {
     method: 'POST',
     ip: nextIp(),
-    body: { login: 'qisqa_parol', password: '1234', displayName: 'Test', role: 'student', className: '1-A' },
+    body: { login: 'qisqa_parol', password: '1234', displayName: 'Test', role: 'student', className: '1' },
   });
   eq(short.status, 400, 'qisqa parol');
   const badClass = await req('/api/register', {
@@ -285,7 +285,7 @@ await check('qisqa parol va noto\'g\'ri sinf rad etiladi', async () => {
   const badLogin = await req('/api/register', {
     method: 'POST',
     ip: nextIp(),
-    body: { login: '<script>alert(1)</script>', password: 'Parol12345', displayName: 'Test', role: 'student', className: '1-A' },
+    body: { login: '<script>alert(1)</script>', password: 'Parol12345', displayName: 'Test', role: 'student', className: '1' },
   });
   eq(badLogin.status, 400, 'g\'alati login');
 });
@@ -294,13 +294,13 @@ await check('yangi o\'quvchi ro\'yxatdan o\'tib tizimga kiradi', async () => {
   const r = await req('/api/register', {
     method: 'POST',
     ip: nextIp(),
-    body: { login: 'yangi_oquvchi', password: 'Parol12345', displayName: 'Yangi Oquvchi', role: 'student', className: '2-A' },
+    body: { login: 'yangi_oquvchi', password: 'Parol12345', displayName: 'Yangi Oquvchi', role: 'student', className: '2', stream: 'uz' },
   });
   eq(r.status, 200, 'holat');
   const dup = await req('/api/register', {
     method: 'POST',
     ip: nextIp(),
-    body: { login: 'yangi_oquvchi', password: 'Parol12345', displayName: 'Takror', role: 'student', className: '2-A' },
+    body: { login: 'yangi_oquvchi', password: 'Parol12345', displayName: 'Takror', role: 'student', className: '2', stream: 'uz' },
   });
   eq(dup.status, 409, 'takroriy login');
 });
@@ -374,9 +374,9 @@ await check('chat: DM xonasiga faqat ikki tomon kira oladi', async () => {
 });
 
 await check('chat: ustoz faqat o\'z sinfi o\'quvchisi bilan yozishadi', async () => {
-  // ustoz1 (t_1) ning sinflari: 1-A (c_1) va 5-B (c_10) → s_1 (1-A) ruxsat, s_4 (1-B) taqiq
+  // ustoz1 (t_1) ning sinflari: «1» (c_1) va «10» (c_10) → s_1 (1-sinf) ruxsat, s_7 (2-sinf) taqiq
   eq((await req('/api/chats/dm_s_1_t_1/messages', { token: teacherToken })).status, 200, 'o\'z o\'quvchisi');
-  eq((await req('/api/chats/dm_s_4_t_1/messages', { token: teacherToken })).status, 403, 'begona sinf o\'quvchisi');
+  eq((await req('/api/chats/dm_s_7_t_1/messages', { token: teacherToken })).status, 403, 'begona sinf o\'quvchisi');
 });
 
 await check('chat: mavjud bo\'lmagan/xiyoliy xona rad etiladi', async () => {
@@ -398,18 +398,18 @@ await check('chat: uzoq xabar qisqartiriladi (DoS himoyasi)', async () => {
 let directorToken = null;
 let tasks1A = [];
 await check('ustoz faqat o\'z sinfiga vazifa bera oladi', async () => {
-  const mine = await req('/api/tasks', { method: 'POST', token: teacherToken, body: { className: '1-A', title: 'Test vazifa' } });
+  const mine = await req('/api/tasks', { method: 'POST', token: teacherToken, body: { className: '1', title: 'Test vazifa' } });
   eq(mine.status, 200, 'o\'z sinfi');
-  const foreign = await req('/api/tasks', { method: 'POST', token: teacherToken, body: { className: '2-A', title: 'Begona sinf' } });
+  const foreign = await req('/api/tasks', { method: 'POST', token: teacherToken, body: { className: '2', title: 'Begona sinf' } });
   eq(foreign.status, 403, 'begona sinf');
-  tasks1A = (await req('/api/tasks', { token: teacherToken })).json.tasks.filter((x) => x.className === '1-A');
+  tasks1A = (await req('/api/tasks', { token: teacherToken })).json.tasks.filter((x) => x.className === '1');
 });
 
 await check('o\'quvchi begona sinf vazifasini "bajarildi" qila olmaydi', async () => {
   const dir = await login('director', '1234', nextIp());
   directorToken = dir.json.token;
   const all = (await req('/api/tasks', { token: directorToken })).json.tasks;
-  const foreign = all.find((t) => t.className !== '1-A');
+  const foreign = all.find((t) => t.className !== '1');
   assert(foreign, 'boshqa sinf vazifasi topilmadi');
   const r = await req('/api/tasks/' + foreign.id + '/done', { method: 'POST', token: studentToken });
   eq(r.status, 404, 'begona vazifa');
@@ -422,7 +422,7 @@ await check('davomat: begona sinf uchun umuman qabul qilinmaydi (403)', async ()
   const r = await req('/api/attendance', {
     method: 'POST',
     token: teacherToken,
-    body: { classId: 'c_2', date: '2026-10-11', entries: [{ studentId: 's_4', status: 'keldi' }] },
+    body: { classId: 'c_2', date: '2026-10-11', entries: [{ studentId: 's_7', status: 'keldi' }] },
   });
   eq(r.status, 403, 'begona sinf');
 });
@@ -435,7 +435,7 @@ await check('davomat: hamma o\'quvchi belgilanmaguncha saqlanmaydi', async () =>
   });
   eq(part.status, 400, 'chala davomat qabul qilindi');
   eq(part.json.marked, 1, 'belgilanganlar soni');
-  eq(part.json.total, 3, 'jami o\'quvchilar soni');
+  eq(part.json.total, 6, 'jami o\'quvchilar soni');
 });
 
 await check('davomat: "kelmadi" uchun sabab majburiy, eski holatlar rad etiladi', async () => {
@@ -449,6 +449,9 @@ await check('davomat: "kelmadi" uchun sabab majburiy, eski holatlar rad etiladi'
         { studentId: 's_1', status: 'keldi' },
         { studentId: 's_2', status: 'kelmadi' },
         { studentId: 's_3', status: 'keldi' },
+        { studentId: 's_4', status: 'keldi' },
+        { studentId: 's_5', status: 'keldi' },
+        { studentId: 's_6', status: 'keldi' },
       ],
     },
   });
@@ -464,6 +467,9 @@ await check('davomat: "kelmadi" uchun sabab majburiy, eski holatlar rad etiladi'
           { studentId: 's_1', status: old },
           { studentId: 's_2', status: 'keldi' },
           { studentId: 's_3', status: 'keldi' },
+          { studentId: 's_4', status: 'keldi' },
+          { studentId: 's_5', status: 'keldi' },
+          { studentId: 's_6', status: 'keldi' },
         ],
       },
     });
@@ -488,11 +494,14 @@ await check('davomat: hamma belgilansa saqlanadi, sabab va izoh yoziladi', async
         { studentId: 's_1', status: 'keldi' },
         { studentId: 's_2', status: 'kelmadi', reason: 'kasallik', note: 'Shifokorda' },
         { studentId: 's_3', status: 'keldi' },
+        { studentId: 's_4', status: 'keldi' },
+        { studentId: 's_5', status: 'keldi' },
+        { studentId: 's_6', status: 'keldi' },
       ],
     },
   });
   eq(good.status, 200, 'saqlash');
-  eq(good.json.saved, 3, 'saqlangan yozuvlar');
+  eq(good.json.saved, 6, 'saqlangan yozuvlar');
   const rec = await req('/api/attendance', { token: teacherToken });
   const absent = rec.json.records.find((r) => r.studentId === 's_2' && r.date === '2026-10-11');
   eq(absent.reason, 'kasallik', 'sabab saqlandi');
@@ -514,6 +523,9 @@ await check('davomat: 24 soat ichida tahrir mumkin (dublikat yozuv qolmaydi)', a
         { studentId: 's_1', status: 'keldi' },
         { studentId: 's_2', status: 'keldi' },
         { studentId: 's_3', status: 'kelmadi', reason: 'oilaviy' },
+        { studentId: 's_4', status: 'keldi' },
+        { studentId: 's_5', status: 'keldi' },
+        { studentId: 's_6', status: 'keldi' },
       ],
     },
   });
@@ -521,7 +533,7 @@ await check('davomat: 24 soat ichida tahrir mumkin (dublikat yozuv qolmaydi)', a
   eq(again.json.updated, true, 'yangilash belgisi');
   const rec = await req('/api/attendance', { token: teacherToken });
   const day = rec.json.records.filter((r) => r.date === '2026-10-11' && r.classId === 'c_1');
-  eq(day.length, 3, 'dublikat yozuvlar paydo bo\'ldi: ' + day.length);
+  eq(day.length, 6, 'dublikat yozuvlar paydo bo\'ldi: ' + day.length);
   assert(day.every((r) => r.canEdit !== false), 'tahrir oynasi ichida qulflangan');
 });
 
@@ -534,6 +546,9 @@ await check('davomat: 24 soatdan keyin tahrir qulflanadi (ATT_EDIT_WINDOW_MINUTE
     { studentId: 's_1', status: 'keldi' },
     { studentId: 's_2', status: 'keldi' },
     { studentId: 's_3', status: 'kelmadi', reason: 'boshqa', note: 'sinov' },
+    { studentId: 's_4', status: 'keldi' },
+    { studentId: 's_5', status: 'keldi' },
+    { studentId: 's_6', status: 'keldi' },
   ];
   const first = await req('/api/attendance', { method: 'POST', token, body: { classId: 'c_1', date: '2026-10-12', entries }, base });
   eq(first.status, 200, 'birinchi saqlash');
@@ -551,12 +566,12 @@ await check('davomat: direktor nazorati classId bilan ishlaydi', async () => {
   eq(r.status, 200, 'holat');
   const t1 = r.json.teachers.find((x) => x.id === 't_1');
   assert(t1, 'ustoz topilmadi');
-  assert(t1.classes.includes('1-A'), 'ustoz sinfi ko\'rinmadi: ' + t1.classes.join(','));
+  assert(t1.classes.includes('1'), 'ustoz sinfi ko\'rinmadi: ' + t1.classes.join(','));
 });
 
 // ---------- 9. Coin ruxsatlari ----------
 await check('ustoz faqat o\'z sinfidagi o\'quvchiga coin bera oladi', async () => {
-  const foreign = await req('/api/teacher/coins', { method: 'POST', token: teacherToken, body: { studentId: 's_4', amount: 10 } });
+  const foreign = await req('/api/teacher/coins', { method: 'POST', token: teacherToken, body: { studentId: 's_7', amount: 10 } });
   eq(foreign.status, 403, 'begona o\'quvchi (boshqa sinf)');
   const negative = await req('/api/teacher/coins', { method: 'POST', token: teacherToken, body: { studentId: 's_1', amount: -100 } });
   eq(negative.status, 400, 'manfiy miqdor');
@@ -668,7 +683,7 @@ await check('ro\'yxatdan o\'tish rate-limitga ega', async () => {
     const r = await req('/api/register', {
       method: 'POST',
       ip,
-      body: { login: 'limit_' + i, password: 'Parol12345', displayName: 'Limit ' + i, role: 'student', className: '1-A' },
+      body: { login: 'limit_' + i, password: 'Parol12345', displayName: 'Limit ' + i, role: 'student', className: '1' },
     });
     last = r.status;
   }
@@ -694,22 +709,24 @@ await check('SEED_DEMO=0: demo hisoblar yo\'q, direktor bootstrap va sinflar ish
   eq(admin.json.user.role, 'director', 'bootstrap hisobi roli');
 
   const classes = await req('/api/classes', { base });
-  eq((classes.json.classes || []).length, 22, 'SEED_DEMO=0 da sinflar yaratilmadi');
+  eq((classes.json.classes || []).length, 11, 'SEED_DEMO=0 da sinflar yaratilmadi');
 
   const student = await post('/api/register', {
     login: 'yangi_oquvchi_prod',
     password: 'Parol12345',
     displayName: 'Yangi Oquvchi',
     role: 'student',
-    className: '11-B',
+    className: '11',
+    stream: 'uz',
   });
   eq(student.status, 200, "SEED_DEMO=0 da o'quvchi ro'yxatdan o'ta olmadi");
-  eq(student.json.user.className, '11-B', 'sinf biriktirildi');
+  eq(student.json.user.className, '11', 'sinf biriktirildi');
+  eq(student.json.user.streamLabel, "B — O'zbek tili", 'guruh yorlig\'i');
   srv.stop();
 });
 
 // ---------- 15. Eski ma'lumotlarni migratsiya qilish ----------
-await check('eski sinflar (8-A...) va chat xonasi avtomatik yangilanadi', async () => {
+await check('eski sinflar (8-A...) yangi tuzilmaga (sinf raqami + A/B guruh) o\'tkaziladi', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'im-sec-mig-'));
   // Eski ko'rinishdagi ma'lumotlarni yozamiz
   const oldUsers = [
@@ -756,11 +773,14 @@ await check('eski sinflar (8-A...) va chat xonasi avtomatik yangilanadi', async 
 
   assert(log.includes('Migratsiya'), 'migratsiya jurnali yo\'q:\n' + log);
   const classes = (await req('/api/classes', { base })).json.classes;
-  eq(classes.length, 22, 'sinflar yangilanmadi');
-  eq(classes[0].name, '1-A', 'birinchi sinf');
+  eq(classes.length, 11, 'sinflar soni yangilanmadi');
+  eq(classes[0].name, '1', 'birinchi sinf');
+  assert(classes.every((c) => /^\d{1,2}$/.test(c.name)), 'sinf nomida harf qolgan');
   const users = JSON.parse(fs.readFileSync(path.join(dir, 'users.json'), 'utf8'));
-  const st = users.find((u) => u.id === 's_1');
-  eq(st.className, '8-A', 'o\'quvchi sinfi saqlanib qoldi (8-A mavjud)');
+  const st = users.find((u) => u.id === 's_1' || u.login === 'oquvchi1');
+  eq(st.className, '8', 'o\'quvchi sinfi «8» ga o\'tkazilmadi');
+  eq(st.stream, 'ru', 'eski «8-A» dan guruh aniqlanmadi (ru bo\'lishi kerak)');
+  eq(st.classId, 'c_8', 'classId yangi sinfga bog\'lanmadi');
   const messages = JSON.parse(fs.readFileSync(path.join(dir, 'messages.json'), 'utf8'));
   eq(messages[0].roomId, 'all_staff', 'chat xonasi nomi yangilanmadi');
   const att = JSON.parse(fs.readFileSync(path.join(dir, 'attendance.json'), 'utf8'));
